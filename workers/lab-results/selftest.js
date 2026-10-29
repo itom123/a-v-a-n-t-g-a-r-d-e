@@ -117,6 +117,13 @@ await test("lead: stores contact and notifies the studio", async () => {
   assert.strictEqual(r.status, 200, await r.clone().text());
   assert.strictEqual(rows.contacts[0][4], "Li");
   assert.ok(/wx123/.test(sent[0].text) && sent[0].to === "hello@a-v-a-n-t-g-a-r-d-e.com");
+  assert.strictEqual(sent.length, 1, "no email given: only the studio note");
+  const withEmail = Object.assign({}, lead, { contact: Object.assign({}, lead.contact, { email: "Li@Example.com" }) });
+  const r2 = await worker.fetch(req("/api/lab/lead", withEmail), env);
+  assert.strictEqual((await r2.json()).reportSent, true);
+  const report = sent[sent.length - 1];
+  assert.strictEqual(report.to, "li@example.com", "the full report goes to the email left in the unlock form");
+  assert.ok(report.html.indexOf("lockup-light.png") > 0 && /Full reading|report|报告/.test(report.subject));
   const minor = Object.assign({}, lead, { contact: Object.assign({}, lead.contact, { age: "u14" }) });
   assert.strictEqual((await worker.fetch(req("/api/lab/lead", minor), env)).status, 400, "under 14 needs a guardian");
 });

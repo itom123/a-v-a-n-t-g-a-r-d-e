@@ -165,6 +165,7 @@
     copyLink: { zh: "复制测试链接", en: "Copy test link" },
     copied: { zh: "已复制", en: "Copied" },
     retake: { zh: "重新测试", en: "Take it again" },
+    retakeConfirm: { zh: "重新测试会清除这台设备上保存的结果，确定吗？", en: "Starting again clears the results saved on this device. Continue?" },
     tabs: [
       { id: "who", zh: "你是谁", en: "Who you are" },
       { id: "report", zh: "完整解读", en: "Full reading" },
@@ -278,7 +279,7 @@
     leadLead: { zh: "导师会结合你的排盘、人格与作品集阶段，给出更具体的选校与准备建议。", en: "A tutor will combine your chart, profile and portfolio stage into specific advice on schools and preparation." },
     fName: { zh: "称呼", en: "Name" },
     fContact: { zh: "微信号或手机号", en: "WeChat ID or phone" },
-    fEmail: { zh: "邮箱（选填）", en: "Email (optional)" },
+    fEmail: { zh: "邮箱（选填，接收完整报告）", en: "Email (for the full report)" },
     fWho: { zh: "我是", en: "I am" },
     whoOpts: [{ v: "student", zh: "学生本人", en: "The student" }, { v: "parent", zh: "家长", en: "A parent" }],
     fAge: { zh: "学生年龄", en: "Student's age" },
@@ -318,20 +319,11 @@
       habit: { zh: "这周可以试试", en: "Try this week" },
       element: { zh: "五行底色", en: "Your elemental colour" }
     },
-    mail: {
-      title: { zh: "把结果\u200b发到我的邮箱", en: "Email me my results" },
-      lead: { zh: "上面是网页版解读。发到邮箱的版本更长，约为它的两倍，并附上网页版全文，方便保存。", en: "Above is the web reading. The emailed version is about twice as long again, with the web reading included so you can keep it all." },
-      inEmail: { zh: "邮件里还有：", en: "Only in the email:" },
-      email: { zh: "邮箱", en: "Email" },
-      cStore: { zh: "我同意先端艺培保存我的测试结果与邮箱（由 Cloudflare 存放在中国境外，最长 12 个月），用于发送结果。", en: "I agree that Avantgarde Studio may keep my results and email (stored by Cloudflare outside mainland China, for up to 12 months) to send me my results." },
-      cAge: { zh: "我已满 14 岁，或已由家长陪同填写。", en: "I'm 14 or over, or a parent is helping me." },
-      cResearch: { zh: "（选填）允许匿名使用我的逐题作答，用于改进测试。", en: "(Optional) Use my individual answers anonymously to improve the test." },
-      cContact: { zh: "（选填）也请导师通过邮件联系我，聊聊申请。", en: "(Optional) I'd also like a tutor to email me about applying." },
-      send: { zh: "发送结果", en: "Send my results" },
-      sent: { zh: "已发送！请查收邮箱（也看看垃圾邮件）。", en: "Sent! Check your inbox (and your spam folder)." },
-      err: { zh: "请填写有效邮箱，并勾选两个必需的同意项。", en: "Please enter a valid email and tick the two required boxes." },
-      fail: { zh: "暂时没有发送成功，请稍后再试。", en: "That didn't send. Please try again in a moment." },
-      limited: { zh: "发送太频繁了，请稍后再试。", en: "Too many tries — please wait a little and try again." }
+    reportMail: {
+      inEmail: { zh: "留下邮箱，还会收到约两倍长的完整报告（附网页版全文）：", en: "Leave your email and we'll also send the full report, about twice as long again (with the web reading included):" },
+      more: { zh: "想要约两倍长的完整报告？在下方表单留下邮箱，我们会发给你。", en: "Want the full report, about twice as long again? Leave your email in the form below and we'll send it." },
+      moreBtn: { zh: "去留下邮箱", en: "Get the report" },
+      sent: { zh: "完整报告已发到你的邮箱（也看看垃圾邮件）。", en: "Your full report is on its way to your inbox (check spam too)." }
     },
 
     methodTitle: { zh: "方法与说明", en: "Method and notes" },

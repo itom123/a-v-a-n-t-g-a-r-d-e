@@ -5,8 +5,8 @@ It runs on the site's own domain under `/api/lab/*`, next to the Pages site.
 
 | Route | What it does |
 | --- | --- |
-| `POST /api/lab/results` | "Email me my results": checks consent, Turnstile and rate limits, stores the result (and, with research consent, the item answers), then sends the reading to the visitor. If they ticked "contact me", it also notifies `STUDIO_TO`. |
-| `POST /api/lab/lead` | The unlock form: stores the lead and notifies `STUDIO_TO`. |
+| `POST /api/lab/lead` | The results page's one form (unlock + 1:1 reading). Stores the lead and notifies `STUDIO_TO`. If the visitor leaves an email, it also sends them the full report: the web reading plus about twice as much again, in the studio email template. |
+| `POST /api/lab/results` | Report-only endpoint (email + consent, Turnstile, rate limits). The page no longer shows a separate email form, so nothing calls it today; it's kept for a future "send again" link. |
 | cron, daily | Deletes everything older than 12 months, as the privacy notice promises. |
 
 The page sends result **keys** only (type, sign numbers, archetype…). Every email is written here from the shared copy in `site/lab/js/`, so the endpoint can't be used to send arbitrary content.

@@ -175,11 +175,24 @@ async function handleLead(req, env) {
   const chart = consent.chart === true && p.chart ? cleanObj(p.chart, 1200) : null;
   const note = renderStudioEmail("lead", { id }, { contact: { name, contact, email, who: str(c.who, 10), age: str(c.age, 10) }, summary: r, profile: p.profile, source: p.source, chart: chart ? JSON.parse(chart) : null });
   const sent = env.STUDIO_TO ? await send(env, Object.assign({ from: notifyFrom(env), to: env.STUDIO_TO, subject: note.subject, text: note.text }, email ? { replyTo: email } : {})) : { status: "skipped", id: null };
+
+  // The single results-page form: an email address there also gets the full report (≈ twice the web reading).
+  let report = { status: "no email", id: null };
+  if (email) {
+    const max = parseInt(env.MAX_PER_EMAIL_PER_DAY || "3", 10);
+    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM contacts WHERE email = ?1 AND created_at > ?2").bind(email, now - DAY).first();
+    if (recent && recent.n >= max) report = { status: "rate-limited", id: null };
+    else {
+      const mail = renderResultEmail(r, p.lang === "en" ? "en" : "zh", env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com", p.profile);
+      report = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text, headers: { "Auto-Submitted": "auto-generated" } });
+    }
+  }
   await env.DB.prepare(
     "INSERT INTO contacts (id, submission_id, created_at, purpose, email, name, contact, who, age, consents, extra, email_status, message_id) VALUES (?1, ?2, ?3, 'lead', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"
   ).bind(crypto.randomUUID(), id, now, email || null, name, contact, str(c.who, 10), str(c.age, 10),
-    JSON.stringify({ privacy: true, crossBorder: true, guardian: consent.guardian === true, chart: !!chart }), chart, sent.status, sent.id).run();
-  return json({ ok: true, id });
+    JSON.stringify({ privacy: true, crossBorder: true, guardian: consent.guardian === true, chart: !!chart }), chart,
+    `studio: ${sent.status}; report: ${report.status}`, report.id || sent.id).run();
+  return json({ ok: true, id, reportSent: report.status === "sent" });
 }
 
 export async function purgeOld(env, now) {

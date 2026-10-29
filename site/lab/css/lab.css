@@ -515,10 +515,8 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 .seg--sm button { padding: 6px 11px; font-size: 13px; }
 .step-nav__pair { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
 
-/* ---------- who you are, paths, email ---------- */
+/* ---------- who you are, paths ---------- */
 .who { display: grid; gap: 12px; margin-bottom: 14px; }
-.mailf { scroll-margin-top: 130px; }
-.mailf .lead__msg { min-height: 1.4em; }
 .who p { margin: 0; }
 .who__signs { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 400 clamp(22px, 2.6vw, 30px)/1.2 var(--f-display); }
 .who__signs small { display: block; font: 500 12.5px/1.4 var(--f-ui); color: rgba(244,245,243,.7); letter-spacing: .04em; text-transform: uppercase; }
@@ -537,8 +535,6 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 .allies li b { font: var(--w-display) 18px var(--f-display); }
 .allies li span { font-weight: 600; }
 .allies li small { display: block; color: var(--ink-3); font-size: 14px; margin-top: 2px; }
-.mailf { display: grid; gap: 14px; }
-.mailf .lead__t, .mailf p { margin: 0; }
 @media (max-width: 1000px) { .paths { grid-template-columns: minmax(0, 1fr); } }
 
 #who .r-note { margin-top: 14px; }
@@ -550,6 +546,8 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 .report-doc p { margin: 0 0 14px; max-width: 66ch; font: 400 17px/1.75 var(--f-body); text-wrap: pretty; }
 .report-doc .report-doc__k { margin: 20px 0 4px; font: 600 14px/1.45 var(--f-ui); color: var(--ink-3); }
 html[lang="zh-CN"] .report-doc p { font-size: 16.5px; line-height: 1.85; }
-.mailf__k { font: 600 14px/1.4 var(--f-ui); }
-.mailf__list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; color: var(--ink-3); }
+.lead .lead__k { font: 600 14.5px/1.5 var(--f-ui); color: var(--paper); }
+.lead__list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; color: #d9dad8; font-size: 15px; }
+.report-doc__more { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+.report-doc__more p { margin: 0 !important; font: 600 15px/1.5 var(--f-ui) !important; }
 
