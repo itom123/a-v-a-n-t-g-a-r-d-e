@@ -16,7 +16,7 @@ The page sends result **keys** only (type, sign numbers, archetype…). Every em
 2. **Onboard the domain for sending.** Go to Compute → Email Service → Email Sending → Onboard Domain → `a-v-a-n-t-g-a-r-d-e.com`. Cloudflare adds the SPF, DKIM and DMARC records.
 3. **Database:** done. `ag-lab` (APAC) exists and its ID is in `wrangler.jsonc`. The deploy creates the tables (`d1 migrations apply`).
 4. **Spam protection:** the form has a honeypot, an origin check, a per-IP rate limit and a per-address daily cap on reports (`MAX_PER_EMAIL_PER_DAY`).
-5. **API token.** Give the GitHub secret `CLOUDFLARE_API_TOKEN` these permissions on top of Pages: Workers Scripts, D1, Workers Routes and Email Sending (all Edit). Without D1 the deploy stops at `d1 migrations apply` with `code: 7403` ("not authorized to access this service") and the Worker is never published, so `/api/lab/lead` has nothing behind it and the form falls back to the visitor's email app.
+5. **API token.** The two Worker steps (D1 migrations, Worker deploy) use the GitHub secret `LAB_WORKER_API_TOKEN` if it exists, otherwise `CLOUDFLARE_API_TOKEN`. That token needs, on this account: Workers Scripts, Workers Routes, D1 and Email Sending (all Edit). Without D1 the migrations step warns with `code: 7403` ("not authorized to access this service") and leads can't be stored, though the Worker still sends the emails.
 6. **Turn on automatic deploys.** In GitHub, go to Settings → Secrets and variables → Actions → Variables and add `LAB_WORKER` = `on`. Each push to `main` then applies migrations and deploys the Worker after the Pages site.
 
 To deploy by hand instead: `npm run deploy:worker`.
