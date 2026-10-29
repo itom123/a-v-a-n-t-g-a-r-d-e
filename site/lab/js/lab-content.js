@@ -165,6 +165,7 @@
     copyLink: { zh: "复制测试链接", en: "Copy test link" },
     copied: { zh: "已复制", en: "Copied" },
     retake: { zh: "重新测试", en: "Take it again" },
+    retakeConfirm: { zh: "重新测试会清除这台设备上保存的结果，确定吗？", en: "Starting again clears the results saved on this device. Continue?" },
     tabs: [
       { id: "who", zh: "你是谁", en: "Who you are" },
       { id: "wuxing", zh: "五行气质", en: "Elements" },
