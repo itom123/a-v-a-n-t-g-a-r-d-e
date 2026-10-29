@@ -24,7 +24,7 @@ The page sends result **keys** only (type, sign numbers, archetype…). Every em
      npx -y wrangler@4 secret put TURNSTILE_SECRET
      ```
    Until both are set, the Turnstile check is skipped and only the rate limits apply.
-5. **API token.** Give the GitHub secret `CLOUDFLARE_API_TOKEN` these permissions on top of Pages: Workers Scripts, D1, Workers Routes and Email Sending (all Edit).
+5. **API token.** The Worker step uses the GitHub secret `LAB_WORKER_API_TOKEN` if it exists, otherwise `CLOUDFLARE_API_TOKEN`. That token needs, on this account: Workers Scripts, Workers Routes, D1 and Email Sending (all Edit). If deploys fail with `code 7403` on `/d1/database/…`, the token in use lacks D1 on this account.
 6. **Turn on automatic deploys.** In GitHub, go to Settings → Secrets and variables → Actions → Variables and add `LAB_WORKER` = `on`. Each push to `main` then applies migrations and deploys the Worker after the Pages site.
 
 To deploy by hand instead: `npm run deploy:worker`.
