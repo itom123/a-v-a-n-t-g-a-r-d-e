@@ -27,6 +27,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: node tests/engine.test.js
+      - run: node tests/secrets.test.js
       - run: node workers/lab-results/selftest.js
       - run: npm run build
       - name: Deploy to Cloudflare Pages

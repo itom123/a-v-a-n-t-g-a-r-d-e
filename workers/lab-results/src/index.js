@@ -20,6 +20,8 @@ function json(body, status) {
 function str(v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; }
 function int(v, lo, hi) { return Number.isInteger(v) && v >= lo && v <= hi ? v : null; }
 function sign(v) { return v == null ? null : int(v, 0, 11) ?? (() => { throw new Bad("sign"); })(); }
+function els(v) { return Array.isArray(v) ? [...new Set(v.filter((x) => Number.isInteger(x) && x >= 0 && x <= 4))].slice(0, 5) : []; }
+const GEJU = new Set(["正财格", "偏财格", "食神格", "伤官格", "正官格", "七杀格", "正印格", "偏印格", "建禄格", "月刃格", "月劫格"]);
 
 /** Validate the result summary sent by the page; throws on anything unexpected. */
 export function cleanResult(r) {
@@ -50,6 +52,13 @@ export function cleanResult(r) {
     mode5: LAB.modes[r.mode5] ? r.mode5 : "expression",
     sun: sign(r.sun), moon: sign(r.moon), moonAlt: sign(r.moonAlt), rising: sign(r.rising),
     mentor: LAB.mentors[r.mentor] ? r.mentor : null,
+    strength: LAB.strengthLevels[r.strength] ? r.strength : null,
+    strongest: int(r.strongest, 0, 4),
+    missing: els(r.missing),
+    hidden: els(r.hidden),
+    use: int(r.use, 0, 4),
+    avoid: els(r.avoid),
+    geju: GEJU.has(r.geju) ? r.geju : null,
     countries: Array.isArray(r.countries) ? r.countries.filter((c) => typeof c === "string" && LAB.countries[c.split(":")[0]]).slice(0, 3) : [],
     schools: Array.isArray(r.schools) ? r.schools.filter((c) => typeof c === "string" && /^[a-z]+:\d{1,3}$/.test(c)).slice(0, 5) : []
   };
@@ -97,6 +106,10 @@ async function insertSubmission(env, id, now, purpose, p, r, answers) {
   ).run();
 }
 
+// Same senders as the contact-form Worker: visitors hear from hello@ (replies reach a person),
+// studio notices come from noreply@.
+function notifyFrom(env) { return { email: env.NOTIFY_FROM || env.FROM, name: "Avantgarde Studio" }; }
+
 async function send(env, msg) {
   try {
     const res = await env.EMAIL.send(Object.assign({ from: { email: env.FROM, name: env.FROM_NAME || "AG LAB" }, replyTo: env.STUDIO_TO }, msg));
@@ -128,15 +141,15 @@ async function handleResults(req, env) {
   const id = crypto.randomUUID();
   await insertSubmission(env, id, now, "results", p, r, answers);
 
-  const mail = renderResultEmail(r, lang, env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com");
-  const sent = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text });
+  const mail = renderResultEmail(r, lang, env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com", p.profile);
+  const sent = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text, headers: { "Auto-Submitted": "auto-generated" } });
   await env.DB.prepare(
     "INSERT INTO contacts (id, submission_id, created_at, purpose, email, consents, email_status, message_id) VALUES (?1, ?2, ?3, 'results', ?4, ?5, ?6, ?7)"
   ).bind(crypto.randomUUID(), id, now, email, JSON.stringify({ store: true, age: true, research: !!answers, contact: consent.contact === true }), sent.status, sent.id).run();
 
   if (consent.contact === true && env.STUDIO_TO) {
     const note = renderStudioEmail("results", { id }, { email, result: r, profile: p.profile, source: p.source });
-    await send(env, { to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text });
+    await send(env, { from: notifyFrom(env), to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text });
   }
   if (sent.status !== "sent") return json({ ok: false, error: "send" }, 502);
   return json({ ok: true, id });
@@ -160,7 +173,7 @@ async function handleLead(req, env) {
   await insertSubmission(env, id, now, "lead", p, r, null);
   const chart = consent.chart === true && p.chart ? cleanObj(p.chart, 1200) : null;
   const note = renderStudioEmail("lead", { id }, { contact: { name, contact, email, who: str(c.who, 10), age: str(c.age, 10) }, summary: r, profile: p.profile, source: p.source, chart: chart ? JSON.parse(chart) : null });
-  const sent = env.STUDIO_TO ? await send(env, Object.assign({ to: env.STUDIO_TO, subject: note.subject, text: note.text }, email ? { replyTo: email } : {})) : { status: "skipped", id: null };
+  const sent = env.STUDIO_TO ? await send(env, Object.assign({ from: notifyFrom(env), to: env.STUDIO_TO, subject: note.subject, text: note.text }, email ? { replyTo: email } : {})) : { status: "skipped", id: null };
   await env.DB.prepare(
     "INSERT INTO contacts (id, submission_id, created_at, purpose, email, name, contact, who, age, consents, extra, email_status, message_id) VALUES (?1, ?2, ?3, 'lead', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"
   ).bind(crypto.randomUUID(), id, now, email || null, name, contact, str(c.who, 10), str(c.age, 10),

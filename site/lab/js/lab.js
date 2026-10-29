@@ -9,7 +9,7 @@
 
   var L = window.LAB;
   var SITE = window.SITE || { meta: {} };
-  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard, Astro = window.AGAstro;
+  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard, Astro = window.AGAstro, Report = window.AGReport;
   var app = document.getElementById("app");
   var KEY = "ag-lab-v2"; // v2: Likert items and the self-reported type
   var U = L.ui;
@@ -874,7 +874,7 @@
         '<nav class="r-tabs" aria-label="Sections">' + U.tabs.filter(function (tb) {
           return !(tb.id === "who" && !(c.astro && L.zodiac)) && !(tb.id === "paths" && !(L.careers && L.careers[ty.type]));
         }).map(function (tb) { return '<a href="#' + tb.id + '">' + T(tb) + "</a>"; }).join("") + "</nav>" +
-        sectionWho() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMail() + sectionMethod() +
+        sectionWho() + sectionReport() + sectionMail() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMethod() +
       "</article>";
 
     drawCard();
@@ -943,11 +943,51 @@
       "</div></div></section>";
   }
 
+  /* ---------- long-form report (lab-report-*.js via report.js) ---------- */
+  function reportInput() {
+    var c = current, ch = c.chart, a = c.astro, e = ch.elements;
+    var strongest = e.pct.indexOf(Math.max.apply(null, e.pct));
+    return {
+      type: c.type.type, self: !!c.type.self,
+      dims: Object.keys(c.type.dims).reduce(function (o, k) { o[k] = c.type.dims[k].pctFirst; return o; }, {}),
+      element: ch.dayMaster.wx, dayMaster: ch.dayMaster.gan,
+      strength: ch.strength.level, strongest: strongest,
+      missing: e.missing.slice(), hidden: e.missing.filter(function (m) { return e.hidden[m] > 0; }),
+      use: ch.yongShen.use, avoid: ch.yongShen.avoid.slice(), geju: ch.geJu.name,
+      sun: a ? a.sun : null, moon: a ? a.moon : null, rising: a ? a.rising : null,
+      resilience: c.res.pct, mode5: c.topMode, mentor: c.match.mentors[0].key,
+      country: c.match.countries[0] ? c.match.countries[0].country : null,
+      timeline: state.profile.timeline, stage: state.profile.stage
+    };
+  }
+  function composeReport() {
+    if (!Report || !L.typeDeep) return null;
+    if (!current.report || current.report.lang !== state.lang) {
+      current.report = safe(function () { var r = Report.compose(reportInput(), L, state.lang); r.lang = state.lang; return r; }, null);
+    }
+    return current.report;
+  }
+  function sectionReport() {
+    var rep = composeReport();
+    if (!rep) return "";
+    return '<section class="r-sec" id="report"><div class="r-wrap r-wrap--narrow">' +
+      '<h2 class="r-h">' + T(tab("report")) + "</h2>" +
+      '<div class="report-doc">' + rep.page.map(function (sec) {
+        return '<section class="report-doc__sec"><h3>' + esc(sec.title) + "</h3>" + sec.items.map(function (it) {
+          return (it.k ? '<p class="report-doc__k">' + esc(it.k) + "</p>" : "") + "<p>" + esc(it.p) + "</p>";
+        }).join("") + "</section>";
+      }).join("") + "</div></div></section>";
+  }
+
   function sectionMail() {
     var M = U.mail;
     return '<section class="r-sec" id="mail"><div class="r-wrap r-wrap--narrow">' +
       '<form class="mailf r-card" id="mailf" novalidate>' +
         '<h3 class="lead__t">' + T(M.title) + "</h3><p>" + T(M.lead) + "</p>" +
+        (function () {
+          var rep = composeReport();
+          return rep ? '<p class="mailf__k">' + T(M.inEmail) + '</p><ul class="mailf__list">' + rep.email.map(function (s) { return "<li>" + esc(s.title) + "</li>"; }).join("") + "</ul>" : "";
+        })() +
         '<label class="inp"><span>' + T(M.email) + '</span><input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
         '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
         '<label class="check"><input type="checkbox" name="cStore"><span>' + T(M.cStore) + "</span></label>" +
@@ -1274,7 +1314,7 @@
 
   /* ---------- result summary sent by both forms (keys only; the Worker writes the email) ---------- */
   function resultSummary() {
-    var c = current, ch = c.chart, a = c.astro;
+    var c = current, ch = c.chart, a = c.astro, ri = reportInput();
     return {
       mode: state.mode,
       archetype: ch.dayMaster.wx + c.type.temperament,
@@ -1291,7 +1331,9 @@
       sun: a ? a.sun : null, moon: a ? a.moon : null, moonAlt: a ? a.moonAlt : null, rising: a ? a.rising : null,
       mentor: c.match.mentors[0].key,
       countries: c.match.countries.map(function (x) { return x.country + ":" + x.score; }),
-      schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; })
+      schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; }),
+      strength: ri.strength, strongest: ri.strongest, missing: ri.missing, hidden: ri.hidden,
+      use: ri.use, avoid: ri.avoid, geju: ri.geju
     };
   }
 

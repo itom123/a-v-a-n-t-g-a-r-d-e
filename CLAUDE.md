@@ -9,6 +9,13 @@ Static bilingual (zh/en) site in `site/`, rendered from `site/assets/js/content.
 - Pushing to `main` deploys automatically (`.github/workflows/deploy.yml`). Work on a branch and merge to `main` only when the change is ready to go live.
 - Write copy in both languages. Chinese titles break only at punctuation or a zero-width break (U+200B, written as a backslash-u200b escape in content.js).
 
+## Secrets and private endpoints
+
+- The repo is public. Never commit API keys, tokens, passwords, private service URLs or credentials, not even in comments, tests or examples.
+- Keys go in Worker secrets (`npx wrangler secret put NAME` in the Worker's folder) or GitHub Actions secrets; code reads them from `env`. A private API base URL (CRM, internal service) is a secret too, never a `vars` entry.
+- Public by design and fine to commit: the Cloudflare account ID, D1 database IDs, the Turnstile *site* key and the `/api/lab/*` paths the browser calls (they're protected by origin checks, consent, rate limits and Turnstile, not by being hidden).
+- `npm test` runs `tests/secrets.test.js`, which fails on anything that looks like a key; add genuinely public IDs to its allowlist only.
+
 ## Rules for content
 
 - This repository is public. Never commit internal notes, meeting minutes, partners' or tutors' private details, or secrets. `.gitignore` lists the folders that stay on the owner's PC.

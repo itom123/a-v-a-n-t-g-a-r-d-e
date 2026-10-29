@@ -10,7 +10,7 @@
     "check:stress": "node _工具/check-wrap.js site stress=1",
     "check:contrast": "node _工具/check-contrast.js site",
     "check:layout": "node _工具/check-layout.js site",
-    "test": "node tests/engine.test.js",
+    "test": "node tests/engine.test.js && node tests/secrets.test.js",
     "test:server": "node server/lead-function/selftest.js",
     "test:worker": "node workers/lab-results/selftest.js",
     "dev:worker": "cd workers/lab-results && npx -y wrangler@4 dev",

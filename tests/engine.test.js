@@ -9,6 +9,7 @@
  * 5. Analysis sanity and strength distribution
  * 6. 16-type scoring, the self-reported type, reading copy and matching
  * 7. Star signs: Sun vs solar terms, Moon vs new moons, Rising geometry
+ * 8. Long-form report: every copy block present, minimum reading length on the page and by email
  */
 "use strict";
 
@@ -419,6 +420,56 @@ test("signs(): known date, unknown time and cusp handling", () => {
   const eq = Astro.signs(chart({ year: 2024, month: 3, day: 20, hour: null, minute: null }));
   assert.ok(eq.sunCusp);
 });
+
+/* ---------------- 8. long-form report ---------------- */
+["lab-report-type.js", "lab-report-chart.js", "lab-report-portfolio.js", "lab-report-plan.js"].forEach((f) => require(path.join(root, "js", f)));
+const Report = require(path.join(root, "js", "report.js"));
+const GEJU = ["正财格", "偏财格", "食神格", "伤官格", "正官格", "七杀格", "正印格", "偏印格", "建禄格", "月刃格", "月劫格"];
+const MIN = { page: { en: 1000, zh: 2000 }, email: { en: 2000, zh: 4000 } }; // ≈ 2 A4 pages on the page, ≈ 4 more by email
+function sampleReport(rnd) {
+  const ty = TYPES[Math.floor(rnd() * 16)], gan = Math.floor(rnd() * 10), pick = (a) => a[Math.floor(rnd() * a.length)];
+  const missing = [0, 1, 2, 3, 4].filter(() => rnd() < 0.2).slice(0, 2);
+  return {
+    type: ty, self: rnd() < 0.3,
+    dims: { EI: ty[0] === "E" ? 51 + Math.floor(rnd() * 49) : Math.floor(rnd() * 50), SN: ty[1] === "S" ? 51 + Math.floor(rnd() * 49) : Math.floor(rnd() * 50), TF: ty[2] === "T" ? 51 + Math.floor(rnd() * 49) : Math.floor(rnd() * 50), JP: ty[3] === "J" ? 51 + Math.floor(rnd() * 49) : Math.floor(rnd() * 50) },
+    element: Math.floor(gan / 2), dayMaster: gan, strength: pick(Object.keys(LAB.strengthLevels)), strongest: Math.floor(rnd() * 5),
+    missing, hidden: missing.filter(() => rnd() < 0.5), use: Math.floor(rnd() * 5), avoid: [Math.floor(rnd() * 5)], geju: pick(GEJU),
+    sun: Math.floor(rnd() * 12), moon: Math.floor(rnd() * 12), rising: rnd() < 0.3 ? null : Math.floor(rnd() * 12),
+    resilience: Math.floor(rnd() * 101), mode5: pick(Object.keys(LAB.modes)), mentor: pick(Object.keys(LAB.mentors)),
+    country: pick(["UK", "HK", "SG"]), timeline: Math.floor(rnd() * 3), stage: Math.floor(rnd() * 4)
+  };
+}
+test("report copy: every block exists in both languages", () => {
+  const leaves = (o, at) => {
+    if (o && typeof o === "object" && "zh" in o && "en" in o) { assert.ok(o.zh && o.en, at); return; }
+    if (o && typeof o === "object") Object.keys(o).forEach((k) => leaves(o[k], at + "." + k));
+    else assert.fail("unexpected leaf at " + at);
+  };
+  ["typeDeep", "dimNarrative", "functionsDeep", "pathsDeep", "dayMasterDeep", "strengthDeep", "elementBalance", "zodiacDeep", "resilienceDeep",
+   "yongDeep", "gejuDeep", "elementPractice", "zodiacEmail", "projects", "portfolioShape", "critGuide", "interviewGuide", "plan12", "planTweaks", "matchDeep"]
+    .forEach((k) => { assert.ok(LAB[k], k); leaves(LAB[k], k); });
+  TYPES.forEach((ty) => assert.strictEqual(LAB.pathsDeep[ty].length, LAB.careers[ty].paths.length, ty));
+  GEJU.forEach((g) => assert.ok(LAB.gejuDeep[g], g));
+});
+const lens = { page: { en: [], zh: [] }, email: { en: [], zh: [] } };
+test("report length: ≥ 2 A4 pages before the email form, ≥ 4 more by email, for 300 random results", () => {
+  let seed = 101;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 300; i++) {
+    const r = sampleReport(rnd);
+    ["en", "zh"].forEach((lang) => {
+      const rep = Report.compose(r, LAB, lang);
+      const all = JSON.stringify(rep);
+      assert.ok(!/undefined|\[object|NaN/.test(all), "gap in " + r.type + " " + lang);
+      const p = Report.length(rep.page, lang), e = Report.length(rep.email, lang);
+      lens.page[lang].push(p); lens.email[lang].push(e);
+      assert.ok(p >= MIN.page[lang], `page ${lang} ${p} < ${MIN.page[lang]} for ${r.type}`);
+      assert.ok(e >= MIN.email[lang], `email ${lang} ${e} < ${MIN.email[lang]} for ${r.type}`);
+    });
+  }
+});
+const lo = (a) => a.length ? Math.min(...a) : 0;
+process.stdout.write(`Report length (min): page en ${lo(lens.page.en)} words, zh ${lo(lens.page.zh)} chars; email-only en ${lo(lens.email.en)} words, zh ${lo(lens.email.zh)} chars\n`);
 
 process.stdout.write("\nStrength levels: " + JSON.stringify(levels) + "\nSpecial: " + JSON.stringify(specials) + "\n格局: " + JSON.stringify(geju) + "\n喜用 basis: " + JSON.stringify(why) + "\n");
 process.stdout.write("\n" + passed + " passed, " + failed + " failed\n");

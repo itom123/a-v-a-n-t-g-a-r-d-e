@@ -542,3 +542,14 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 @media (max-width: 1000px) { .paths { grid-template-columns: minmax(0, 1fr); } }
 
 #who .r-note { margin-top: 14px; }
+
+/* ---------- long-form reading ---------- */
+.report-doc { background: var(--white); border: 1px solid var(--line); border-radius: 22px; padding: clamp(22px, 5vw, 56px); }
+.report-doc__sec + .report-doc__sec { margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--line); }
+.report-doc h3 { margin: 0 0 16px; font: 400 clamp(22px, 2.6vw, 30px)/1.2 var(--f-display); text-wrap: balance; }
+.report-doc p { margin: 0 0 14px; max-width: 66ch; font: 400 17px/1.75 var(--f-body); text-wrap: pretty; }
+.report-doc .report-doc__k { margin: 20px 0 4px; font: 600 14px/1.45 var(--f-ui); color: var(--ink-3); }
+html[lang="zh-CN"] .report-doc p { font-size: 16.5px; line-height: 1.85; }
+.mailf__k { font: 600 14px/1.4 var(--f-ui); }
+.mailf__list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; color: var(--ink-3); }
+

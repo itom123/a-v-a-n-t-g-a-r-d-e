@@ -29,6 +29,15 @@ The page sends result **keys** only (type, sign numbers, archetype…). Every em
 
 To deploy by hand instead: `npm run deploy:worker`.
 
+## Secrets and private endpoints
+
+This repo is public. Secrets never go in `wrangler.jsonc`, code or docs:
+```bash
+npx -y wrangler@4 secret put TURNSTILE_SECRET     # and any future key, e.g. CRM_API_KEY
+npx -y wrangler@4 secret put CRM_URL              # private endpoints are secrets too
+```
+Read them as `env.NAME`. `vars` in `wrangler.jsonc` is only for public values (sender addresses, the site URL). `npm test` includes a secret scan.
+
 ## Local development
 
 ```bash

@@ -167,6 +167,7 @@
     retake: { zh: "重新测试", en: "Take it again" },
     tabs: [
       { id: "who", zh: "你是谁", en: "Who you are" },
+      { id: "report", zh: "完整解读", en: "Full reading" },
       { id: "wuxing", zh: "五行气质", en: "Elements" },
       { id: "chart", zh: "专业排盘", en: "Full chart" },
       { id: "type", zh: "16型人格", en: "16-type" },
@@ -319,7 +320,8 @@
     },
     mail: {
       title: { zh: "把结果\u200b发到我的邮箱", en: "Email me my results" },
-      lead: { zh: "完整解读会发到你的邮箱，方便保存和以后对照。", en: "We'll send the full reading to your inbox so you can keep it." },
+      lead: { zh: "上面是网页版解读。发到邮箱的版本更长，约为它的两倍，并附上网页版全文，方便保存。", en: "Above is the web reading. The emailed version is about twice as long again, with the web reading included so you can keep it all." },
+      inEmail: { zh: "邮件里还有：", en: "Only in the email:" },
       email: { zh: "邮箱", en: "Email" },
       cStore: { zh: "我同意先端艺培保存我的测试结果与邮箱（由 Cloudflare 存放在中国境外，最长 12 个月），用于发送结果。", en: "I agree that Avantgarde Studio may keep my results and email (stored by Cloudflare outside mainland China, for up to 12 months) to send me my results." },
       cAge: { zh: "我已满 14 岁，或已由家长陪同填写。", en: "I'm 14 or over, or a parent is helping me." },
