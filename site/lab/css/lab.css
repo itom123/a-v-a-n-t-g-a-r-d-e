@@ -548,6 +548,4 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 html[lang="zh-CN"] .report-doc p { font-size: 16.5px; line-height: 1.85; }
 .lead .lead__k { font: 600 14.5px/1.5 var(--f-ui); color: var(--paper); }
 .lead__list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; color: #d9dad8; font-size: 15px; }
-.report-doc__more { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
-.report-doc__more p { margin: 0 !important; font: 600 15px/1.5 var(--f-ui) !important; }
 

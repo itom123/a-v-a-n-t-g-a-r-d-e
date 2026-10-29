@@ -39,12 +39,12 @@ const RESULT = {
   sun: 3, moon: 6, moonAlt: null, rising: 5, mentor: "critical", countries: ["UK:87", "HK:80"], schools: ["gsa:88", "rca:80"],
   strength: "slightly-weak", strongest: 3, missing: [1], hidden: [1], use: 3, avoid: [1], geju: "正印格", mentor2: "dialogue"
 };
-function body(extra) {
+function lead(extra, contact) {
   return Object.assign({
-    lang: "zh", version: "2.0.0", hp: "", email: "Student@Example.com",
-    consent: { store: true, age: true, research: true, contact: false },
-    turnstile: "", source: { utm_source: "xhs" }, profile: { level: "MA" }, quizMs: 420000,
-    result: RESULT, answers: [["ei1", 6], ["sn2", 3], ["nope", 4]]
+    lang: "zh", version: "2.0.0", hp: "", source: { utm_source: "xhs" }, profile: { level: "BA" },
+    contact: Object.assign({ name: "Li", contact: "wx123", email: "Li@Example.com", who: "student", age: "18+" }, contact || {}),
+    consent: { privacy: true, crossBorder: true, guardian: false, chart: false },
+    summary: RESULT
   }, extra || {});
 }
 function req(path, payload, headers) {
@@ -54,82 +54,73 @@ function req(path, payload, headers) {
   });
 }
 
-await test("results: stores, keeps only known answers, emails the visitor", async () => {
+await test("lead: stores, notifies the studio and emails the visitor the full report", async () => {
   const { env, rows, sent } = makeEnv();
-  const r = await worker.fetch(req("/api/lab/results", body()), env);
+  const r = await worker.fetch(req("/api/lab/lead", lead()), env);
   assert.strictEqual(r.status, 200, await r.clone().text());
+  assert.strictEqual((await r.json()).reportSent, true);
   assert.strictEqual(rows.submissions.length, 1);
-  const answers = JSON.parse(rows.submissions[0][19]);
-  assert.deepStrictEqual(answers, [["ei1", 6], ["sn2", 3]]);
-  assert.strictEqual(rows.contacts[0][3], "student@example.com");
-  assert.strictEqual(sent.length, 1);
-  assert.strictEqual(sent[0].to, "student@example.com");
-  assert.ok(/夜航档案家/.test(sent[0].subject) && /INFJ/.test(sent[0].subject), sent[0].subject);
-  assert.ok(sent[0].html.indexOf("巨蟹座") > 0 && sent[0].text.indexOf("天秤座") > 0, "signs in the email");
-  assert.strictEqual(sent[0].from.email, "hello@a-v-a-n-t-g-a-r-d-e.com", "visitor emails come from hello@, as on the contact form");
+  assert.strictEqual(rows.contacts[0][4], "Li");
+  assert.strictEqual(sent.length, 2, "studio note + report");
+  assert.ok(/wx123/.test(sent[0].text) && sent[0].to === "hello@a-v-a-n-t-g-a-r-d-e.com" && sent[0].replyTo === "li@example.com");
+  assert.strictEqual(sent[0].from.email, "noreply@a-v-a-n-t-g-a-r-d-e.com");
+  const report = sent[1];
+  assert.strictEqual(report.to, "li@example.com", "the full report goes to the email left in the form");
+  assert.strictEqual(report.from.email, "hello@a-v-a-n-t-g-a-r-d-e.com", "visitor emails come from hello@, as on the contact form");
+  assert.strictEqual(report.headers["Auto-Submitted"], "auto-generated");
+  assert.ok(report.html.indexOf("lockup-light.png") > 0 && /报告/.test(report.subject));
+  assert.ok(report.html.indexOf("巨蟹座") > 0 && report.text.indexOf("天秤座") > 0, "signs in the email");
+  assert.ok(report.text.indexOf("1 对 1") > 0 && report.text.indexOf("回复") > 0, "says why it was sent and how to delete");
 });
-await test("results: answers dropped without research consent; studio told when asked", async () => {
-  const { env, rows, sent } = makeEnv();
-  const r = await worker.fetch(req("/api/lab/results", body({ consent: { store: true, age: true, research: false, contact: true } })), env);
-  assert.strictEqual(r.status, 200);
-  assert.strictEqual(rows.submissions[0][19], null);
-  assert.strictEqual(sent.length, 2);
-  assert.strictEqual(sent[1].to, "hello@a-v-a-n-t-g-a-r-d-e.com");
-});
-await test("results: rejects missing consent, bad email, tampered result, other origins", async () => {
+await test("lead: email is required and must look like an address", async () => {
   const { env, sent } = makeEnv();
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body({ consent: { store: true } })), env)).status, 400);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body({ email: "a@b" })), env)).status, 400);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body({ result: Object.assign({}, RESULT, { type: "<b>" }) })), env)).status, 400);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body({ result: Object.assign({}, RESULT, { archetype: "4NT" }) })), env)).status, 400);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body({ result: Object.assign({}, RESULT, { sun: 12 }) })), env)).status, 400);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body(), { Origin: "https://evil.example" }), env)).status, 403);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead(null, { email: "" })), env)).status, 400);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead(null, { email: "a@b" })), env)).status, 400);
   assert.strictEqual(sent.length, 0);
 });
-await test("results: honeypot pretends success and stores nothing", async () => {
+await test("lead: rejects missing consent, minors without a guardian, tampered results, other origins", async () => {
+  const { env } = makeEnv();
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead({ consent: { privacy: true } })), env)).status, 400);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead(null, { age: "u14" })), env)).status, 400, "under 14 needs a guardian");
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead({ summary: Object.assign({}, RESULT, { type: "<b>" }) })), env)).status, 400);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead({ summary: Object.assign({}, RESULT, { archetype: "4NT" }) })), env)).status, 400);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead({ summary: Object.assign({}, RESULT, { sun: 12 }) })), env)).status, 400);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead(), { Origin: "https://evil.example" }), env)).status, 403);
+});
+await test("lead: honeypot pretends success and stores nothing", async () => {
   const { env, rows, sent } = makeEnv();
-  const r = await worker.fetch(req("/api/lab/results", body({ hp: "spam" })), env);
+  const r = await worker.fetch(req("/api/lab/lead", lead({ hp: "spam" })), env);
   assert.strictEqual(r.status, 200);
   assert.strictEqual(rows.submissions.length + sent.length, 0);
 });
-await test("results: rate limits per IP and per email", async () => {
+await test("lead: rate limits per IP; the report per email address", async () => {
   const a = makeEnv({ limited: true });
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body()), a.env)).status, 429);
+  assert.strictEqual((await worker.fetch(req("/api/lab/lead", lead()), a.env)).status, 429);
   const b = makeEnv();
-  for (let i = 0; i < 3; i++) assert.strictEqual((await worker.fetch(req("/api/lab/results", body()), b.env)).status, 200);
-  assert.strictEqual((await worker.fetch(req("/api/lab/results", body()), b.env)).status, 429);
+  for (let i = 0; i < 3; i++) assert.strictEqual((await (await worker.fetch(req("/api/lab/lead", lead()), b.env)).json()).reportSent, true);
+  const r = await worker.fetch(req("/api/lab/lead", lead()), b.env);
+  assert.strictEqual(r.status, 200, "the lead still goes through");
+  assert.strictEqual((await r.json()).reportSent, false);
 });
-await test("results: a failed send is recorded and reported", async () => {
+await test("lead: a failed send is recorded and reported to the page", async () => {
   const { env, rows } = makeEnv({ failSend: true });
-  const r = await worker.fetch(req("/api/lab/results", body()), env);
-  assert.strictEqual(r.status, 502);
-  assert.ok(/^failed/.test(rows.contacts[0][5]));
+  const r = await worker.fetch(req("/api/lab/lead", lead()), env);
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual((await r.json()).reportSent, false);
+  assert.ok(/report: failed/.test(rows.contacts[0][10]));
 });
-await test("lead: stores contact and notifies the studio", async () => {
-  const { env, rows, sent } = makeEnv();
-  const lead = {
-    lang: "en", version: "2.0.0", hp: "", source: {}, profile: { level: "BA" },
-    contact: { name: "Li", contact: "wx123", email: "", who: "student", age: "18+" },
-    consent: { privacy: true, crossBorder: true, guardian: false, chart: false },
-    summary: Object.assign({}, RESULT, { mode: "self", at: "T", quality: "self", source: "16p" })
-  };
-  const r = await worker.fetch(req("/api/lab/lead", lead), env);
+await test("lead: emails still go out when the database is down", async () => {
+  const { env, sent } = makeEnv();
+  env.DB = { prepare() { return { bind() { return this; }, async run() { throw new Error("no such table"); }, async first() { throw new Error("no such table"); } }; } };
+  const r = await worker.fetch(req("/api/lab/lead", lead()), env);
   assert.strictEqual(r.status, 200, await r.clone().text());
-  assert.strictEqual(rows.contacts[0][4], "Li");
-  assert.ok(/wx123/.test(sent[0].text) && sent[0].to === "hello@a-v-a-n-t-g-a-r-d-e.com");
-  assert.strictEqual(sent.length, 1, "no email given: only the studio note");
-  const withEmail = Object.assign({}, lead, { contact: Object.assign({}, lead.contact, { email: "Li@Example.com" }) });
-  const r2 = await worker.fetch(req("/api/lab/lead", withEmail), env);
-  assert.strictEqual((await r2.json()).reportSent, true);
-  const report = sent[sent.length - 1];
-  assert.strictEqual(report.to, "li@example.com", "the full report goes to the email left in the unlock form");
-  assert.ok(report.html.indexOf("lockup-light.png") > 0 && /Full reading|report|报告/.test(report.subject));
-  const minor = Object.assign({}, lead, { contact: Object.assign({}, lead.contact, { age: "u14" }) });
-  assert.strictEqual((await worker.fetch(req("/api/lab/lead", minor), env)).status, 400, "under 14 needs a guardian");
+  assert.strictEqual((await r.json()).reportSent, true);
+  assert.strictEqual(sent.length, 2);
 });
-await test("only POST + JSON", async () => {
+await test("only POST + JSON; the old results route is gone", async () => {
   const { env } = makeEnv();
-  assert.strictEqual((await worker.fetch(new Request("https://x/api/lab/results"), env)).status, 405);
+  assert.strictEqual((await worker.fetch(new Request("https://x/api/lab/lead"), env)).status, 405);
+  assert.strictEqual((await worker.fetch(req("/api/lab/results", lead()), env)).status, 404);
 });
 await test("emails: studio template, every type × language, email-only ≥ 4 A4 pages, under 90 KB", async () => {
   const types = Object.keys(LAB.types);

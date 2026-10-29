@@ -37,12 +37,20 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}
       # Off until the one-time setup in workers/lab-results/README.md is done; then set the
       # repository variable LAB_WORKER to "on" (Settings > Secrets and variables > Actions > Variables).
+      # A token without D1 permission fails here with code 7403. Warn instead of stopping, so the Worker
+      # still deploys: it sends the emails even when it can't store the lead.
+      - name: Apply AG LAB database migrations
+        if: ${{ vars.LAB_WORKER == 'on' }}
+        continue-on-error: true
+        working-directory: workers/lab-results
+        run: npx -y wrangler@4 d1 migrations apply ag-lab --remote || { echo "::warning::D1 migrations failed. Give LAB_WORKER_API_TOKEN (or CLOUDFLARE_API_TOKEN) the D1 Edit permission (see workers/lab-results/README.md)."; exit 1; }
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.LAB_WORKER_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}
       - name: Deploy the AG LAB results Worker
         if: ${{ vars.LAB_WORKER == 'on' }}
         working-directory: workers/lab-results
-        run: |
-          npx -y wrangler@4 d1 migrations apply ag-lab --remote
-          npx -y wrangler@4 deploy
+        run: npx -y wrangler@4 deploy
         env:
           # A separate token for the Worker (Workers Scripts, Workers Routes, D1, Email Sending: Edit) if one is set;
           # otherwise the Pages token, which then needs those permissions too.
