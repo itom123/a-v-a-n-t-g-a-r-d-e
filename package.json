@@ -5,7 +5,7 @@
   "scripts": {
     "setup": "npm install && playwright install chromium",
     "preview": "node tools/preview-server.js site 8088",
-    "build": "node _工具/build-pages.js site && node _工具/prerender.js site",
+    "build": "node _工具/build-pages.js site && node _工具/prerender.js site && node _工具/stamp-assets.js site",
     "check": "node _工具/check-wrap.js site",
     "check:stress": "node _工具/check-wrap.js site stress=1",
     "check:contrast": "node _工具/check-contrast.js site",
