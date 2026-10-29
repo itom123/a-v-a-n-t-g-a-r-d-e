@@ -74,6 +74,7 @@ export function reportInput(r, profile) {
   return Object.assign({}, r, {
     self: r.mode === "self",
     country: (r.countries[0] || "").split(":")[0] || null,
+    country2: (r.countries[1] || "").split(":")[0] || null,
     timeline: profile && Number.isInteger(profile.timeline) && profile.timeline >= 0 && profile.timeline <= 2 ? profile.timeline : 1,
     stage: profile && Number.isInteger(profile.stage) && profile.stage >= 0 && profile.stage <= 3 ? profile.stage : null
   });

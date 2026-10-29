@@ -58,7 +58,7 @@ body.lab { background: var(--paper); }
 .intro__title { margin: 0; font: var(--w-display) clamp(46px, 7.2vw, 112px)/.98 var(--f-display); letter-spacing: -.01em; }
 html[lang="zh-CN"] .intro__title { letter-spacing: .02em; line-height: 1.08; }
 /* Chinese display titles break only at punctuation, spaces or a \u200b in lab-content.js (你是哪一种/创作者？) */
-html[lang="zh-CN"] :is(.intro__title, .step-title, .r-h, .r-hero__title, .lead__t, .intro__lead, .step--self .step-lead) { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
+html[lang="zh-CN"] :is(.intro__title, .step-title, .r-h, .r-hero__title, .lead__t, .intro__lead, .step--self .step-lead, .report-doc h3) { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
 .intro__lead { margin: 0; font: 400 clamp(17px, 1.6vw, 21px)/1.6 var(--f-body); color: var(--ink); max-width: 34em; }
 .parts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
 .parts li { display: grid; gap: 4px; padding: 16px 16px 18px; background: rgba(244,245,243,.62); border-radius: 16px; backdrop-filter: blur(6px); }

@@ -9,7 +9,7 @@
  *   type "INFJ", dims {EI: pctFirst…}, self (bool), element 0–4, dayMaster 0–9,
  *   strength "weak"…, strongest 0–4, missing [0–4], hidden [0–4],
  *   use 0–4, avoid [0–4], geju "正官格", sun/moon/rising 0–11|null,
- *   resilience 0–100, mode5 "research", mentor "critical", country "UK",
+ *   resilience 0–100, mode5 "research", mentor "critical", mentor2, country "UK", country2,
  *   timeline 0–2, stage 0–3
  */
 (function (root, factory) {
@@ -38,7 +38,7 @@
   var W = {
     portrait: { zh: "你的创作画像", en: "Your portrait as a maker" },
     prefs: { zh: "四个维度，逐一细读", en: "Your four preferences, in depth" },
-    mind: { zh: "你的思维是怎样运转的", en: "How your mind works" },
+    mind: { zh: "你的思维\u200b是怎样运转的", en: "How your mind works" },
     pressure: { zh: "压力之下，与成长的方向", en: "Under pressure, and where you grow" },
     chart: { zh: "日主与五行", en: "Your Day Master and the five elements" },
     signs: { zh: "太阳、月亮与上升", en: "Sun, Moon and Rising" },
@@ -73,6 +73,12 @@
     useEl: { zh: "你的喜用：{el}", en: "Your favourable element: {el}" },
     avoidEl: { zh: "需要留意：{el}", en: "Keep in check: {el}" },
     practice: { zh: "适合你的材料与节奏", en: "Materials and rhythms that suit you" },
+    bringIn: { zh: "把喜用的「{el}」带进创作", en: "Bringing your favourable {el} into the work" },
+    also: { zh: "也值得考虑", en: "Also worth weighing" },
+    blend: { zh: "星座、人格与五行，合在一起看", en: "Signs, type and elements, together" },
+    blendK: { zh: "组合解读", en: "How it blends" },
+    rhythmK: { zh: "工作节奏", en: "Working rhythm" },
+    eastWestK: { zh: "东方五行 × 西方星座", en: "East meets West" },
     pattern: { zh: "格局：{g}", en: "Pattern: {g}" },
     tweaks: { zh: "按你的情况微调", en: "Adjusted to you" },
     country: { zh: "学习环境", en: "Where to study" },
@@ -143,11 +149,18 @@
     });
 
     var email = [];
+    if (r.sun != null && L.signTemperament) {
+      var se = ["fire", "earth", "air", "water"][r.sun % 4], sm = ["cardinal", "fixed", "mutable"][r.sun % 3];
+      email.push({ id: "blend", title: t(W.blend), items: [
+        P(L.signTemperament[se][temp], W.blendK), P(L.modalityJP[sm][ty[3]], W.rhythmK), P(L.eastWest[r.element][se], W.eastWestK)
+      ] });
+    }
     var chartDeep = [];
     if (r.geju && L.gejuDeep[r.geju]) chartDeep.push(P(L.gejuDeep[r.geju], t(W.pattern, { g: r.geju })));
     if (r.use != null) chartDeep.push(P(L.yongDeep[r.use].use, t(W.useEl, { el: h.el(r.use) })));
     if (r.avoid && r.avoid.length) chartDeep.push(P(L.yongDeep[r.avoid[0]].avoid, t(W.avoidEl, { el: h.el(r.avoid[0]) })));
     chartDeep.push(P(L.elementPractice[r.element], W.practice));
+    if (r.use != null && r.use !== r.element) chartDeep.push(P(L.elementPractice[r.use], t(W.bringIn, { el: h.el(r.use) })));
     email.push({ id: "chartDeep", title: t(W.chartDeep), items: chartDeep });
     if (r.sun != null) {
       var z = L.zodiacEmail[r.sun];
@@ -181,6 +194,8 @@
     var md = L.matchDeep, matches = [];
     if (r.country && md.country[r.country]) matches.push(P(md.country[r.country], t(W.country) + " · " + t(L.countries[r.country])));
     if (r.mentor && md.mentor[r.mentor]) matches.push(P(md.mentor[r.mentor], t(W.mentor) + " · " + t(L.mentors[r.mentor])));
+    if (r.country2 && md.country[r.country2]) matches.push(P(md.country[r.country2], t(W.also) + " · " + t(L.countries[r.country2])));
+    if (r.mentor2 && r.mentor2 !== r.mentor && md.mentor[r.mentor2]) matches.push(P(md.mentor[r.mentor2], t(W.also) + " · " + t(L.mentors[r.mentor2])));
     if (r.mode5 && md.mode[r.mode5]) matches.push(P(md.mode[r.mode5], t(W.mode) + " · " + t(L.modes[r.mode5])));
     if (matches.length) email.push({ id: "matches", title: t(W.matches), items: matches });
 

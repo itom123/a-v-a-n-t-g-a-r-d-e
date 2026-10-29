@@ -957,6 +957,8 @@
       sun: a ? a.sun : null, moon: a ? a.moon : null, rising: a ? a.rising : null,
       resilience: c.res.pct, mode5: c.topMode, mentor: c.match.mentors[0].key,
       country: c.match.countries[0] ? c.match.countries[0].country : null,
+      country2: c.match.countries[1] ? c.match.countries[1].country : null,
+      mentor2: c.match.mentors[1] ? c.match.mentors[1].key : null,
       timeline: state.profile.timeline, stage: state.profile.stage
     };
   }
@@ -1333,7 +1335,7 @@
       countries: c.match.countries.map(function (x) { return x.country + ":" + x.score; }),
       schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; }),
       strength: ri.strength, strongest: ri.strongest, missing: ri.missing, hidden: ri.hidden,
-      use: ri.use, avoid: ri.avoid, geju: ri.geju
+      use: ri.use, avoid: ri.avoid, geju: ri.geju, mentor2: ri.mentor2
     };
   }
 

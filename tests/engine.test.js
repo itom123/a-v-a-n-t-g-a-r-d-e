@@ -427,6 +427,13 @@ const Report = require(path.join(root, "js", "report.js"));
 const GEJU = ["正财格", "偏财格", "食神格", "伤官格", "正官格", "七杀格", "正印格", "偏印格", "建禄格", "月刃格", "月劫格"];
 const MIN = { page: { en: 1000, zh: 2000 }, email: { en: 2000, zh: 4000 } }; // ≈ 2 A4 pages on the page, ≈ 4 more by email
 function sampleReport(rnd) {
+  const r = sampleReport0(rnd);
+  const cs = ["UK", "HK", "SG"].filter((c) => c !== r.country), ms = Object.keys(LAB.mentors).filter((m) => m !== r.mentor);
+  r.country2 = cs[Math.floor(rnd() * cs.length)];
+  r.mentor2 = ms[Math.floor(rnd() * ms.length)];
+  return r;
+}
+function sampleReport0(rnd) {
   const ty = TYPES[Math.floor(rnd() * 16)], gan = Math.floor(rnd() * 10), pick = (a) => a[Math.floor(rnd() * a.length)];
   const missing = [0, 1, 2, 3, 4].filter(() => rnd() < 0.2).slice(0, 2);
   return {
@@ -436,7 +443,7 @@ function sampleReport(rnd) {
     missing, hidden: missing.filter(() => rnd() < 0.5), use: Math.floor(rnd() * 5), avoid: [Math.floor(rnd() * 5)], geju: pick(GEJU),
     sun: Math.floor(rnd() * 12), moon: Math.floor(rnd() * 12), rising: rnd() < 0.3 ? null : Math.floor(rnd() * 12),
     resilience: Math.floor(rnd() * 101), mode5: pick(Object.keys(LAB.modes)), mentor: pick(Object.keys(LAB.mentors)),
-    country: pick(["UK", "HK", "SG"]), timeline: Math.floor(rnd() * 3), stage: Math.floor(rnd() * 4)
+    country: pick(["UK", "HK", "SG"]), country2: null, mentor2: null, // filled below: real results always rank all countries and mentor styles timeline: Math.floor(rnd() * 3), stage: Math.floor(rnd() * 4)
   };
 }
 test("report copy: every block exists in both languages", () => {

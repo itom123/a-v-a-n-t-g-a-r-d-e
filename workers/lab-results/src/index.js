@@ -52,6 +52,7 @@ export function cleanResult(r) {
     mode5: LAB.modes[r.mode5] ? r.mode5 : "expression",
     sun: sign(r.sun), moon: sign(r.moon), moonAlt: sign(r.moonAlt), rising: sign(r.rising),
     mentor: LAB.mentors[r.mentor] ? r.mentor : null,
+    mentor2: LAB.mentors[r.mentor2] ? r.mentor2 : null,
     strength: LAB.strengthLevels[r.strength] ? r.strength : null,
     strongest: int(r.strongest, 0, 4),
     missing: els(r.missing),

@@ -27,7 +27,7 @@ function makeEnv(opts = {}) {
     DB: { prepare: stmt, async batch(list) { list.forEach((s) => (s.ran = true)); env.batched = list; return []; } },
     EMAIL: { async send(m) { if (opts.failSend) throw new Error("boom"); sent.push(m); return { messageId: "m" + sent.length }; } },
     LIMIT: { async limit() { return { success: !opts.limited }; } },
-    FROM: "lab@a-v-a-n-t-g-a-r-d-e.com", FROM_NAME: "AG LAB", STUDIO_TO: "hello@a-v-a-n-t-g-a-r-d-e.com",
+    FROM: "hello@a-v-a-n-t-g-a-r-d-e.com", FROM_NAME: "Avantgarde Studio 先端艺培", NOTIFY_FROM: "noreply@a-v-a-n-t-g-a-r-d-e.com", STUDIO_TO: "hello@a-v-a-n-t-g-a-r-d-e.com",
     SITE: "https://www.a-v-a-n-t-g-a-r-d-e.com", MAX_PER_EMAIL_PER_DAY: "3"
   };
   return { env, rows, sent };
@@ -37,7 +37,7 @@ const RESULT = {
   mode: "test", archetype: "4NF", element: 4, dayMaster: 9, type: "INFJ", at: null, source: null,
   dims: { EI: 30, SN: 22, TF: 35, JP: 60 }, quality: "high", flags: [], resilience: 62, mode5: "research",
   sun: 3, moon: 6, moonAlt: null, rising: 5, mentor: "critical", countries: ["UK:87", "HK:80"], schools: ["gsa:88", "rca:80"],
-  strength: "slightly-weak", strongest: 3, missing: [1], hidden: [1], use: 3, avoid: [1], geju: "正印格"
+  strength: "slightly-weak", strongest: 3, missing: [1], hidden: [1], use: 3, avoid: [1], geju: "正印格", mentor2: "dialogue"
 };
 function body(extra) {
   return Object.assign({
