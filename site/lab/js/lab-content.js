@@ -121,6 +121,7 @@
     qOf: { zh: "{n} / {total}", en: "{n} / {total}" },
     sectionType: { zh: "性格倾向", en: "Preferences" },
     sectionRes: { zh: "创作韧性", en: "Creative resilience" },
+    sectionCheck: { zh: "注意力检查 · 不计分", en: "Check · not scored" },
 
     selfTitle: { zh: "你的 MBTI", en: "Your MBTI" },
     selfLead: { zh: "做过 MBTI 或 16Personalities？\u200b填好结果，\u200b就能跳过 48 道题。", en: "Already taken MBTI or 16Personalities? Enter your result and skip the 48 type questions." },

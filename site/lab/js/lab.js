@@ -621,7 +621,7 @@
     var items = Q(), i = Math.min(state.qIndex, items.length - 1), q = items[i], total = items.length;
     if (!state.quizStartedAt) state.quizStartedAt = Date.now();
     var done = items.filter(function (x) { return state.answers[x.item.id]; }).length;
-    var sec = q.kind === "res" ? U.sectionRes : U.sectionType;
+    var sec = q.kind === "res" ? U.sectionRes : q.kind === "check" ? U.sectionCheck : U.sectionType;
     var it = q.item, cur = state.answers[it.id];
     var body = '<div class="bi bi--one">' +
       '<p class="bi__s bi__s--one" id="lk-s">' + T(it.t) + "</p>" +
@@ -638,7 +638,7 @@
         '<header class="step-head"><h1 class="step-title">' + T(self ? U.sectionRes : U.quizTitle) + '</h1><p class="step-lead">' + T(self ? U.resLead : U.quizLead) + "</p></header>" +
         '<div class="qbar"><span class="qbar__sec">' + T(sec) + '</span><span class="qbar__n">' + T(U.qOf, { n: i + 1, total: total }) + "</span>" +
         '<div class="qbar__track"><i style="width:' + Math.round(done / total * 100) + '%"></i></div></div>' +
-        '<div class="qcard" data-kind="' + q.kind + '">' + body + "</div>" +
+        '<div class="qcard' + (q.kind === "check" ? " qcard--check" : "") + '" data-kind="' + q.kind + '">' + body + "</div>" +
         '<div class="step-nav"><button class="btn-ghost" data-act="quiz-prev">← ' + T(U.prev) + "</button>" +
         (self ? '<span class="step-nav__pair"><button class="btn-ghost" data-act="self-skip">' + T(U.selfSkip) + "</button>" : "") +
         (state.answers[it.id] ? '<button class="btn-main" data-act="quiz-next">' + T(U.next) + ' <i aria-hidden="true">→</i></button>' : self ? "" : "<span></span>") +
