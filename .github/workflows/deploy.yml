@@ -1,5 +1,6 @@
 # Every push to main: run the engine tests, rebuild the pages, deploy site/ to Cloudflare Pages.
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN (Pages: Edit) and CLOUDFLARE_ACCOUNT_ID.
+# Needs the repository secret CLOUDFLARE_API_TOKEN (Account > Cloudflare Pages > Edit).
+# The account ID is not a secret; a CLOUDFLARE_ACCOUNT_ID secret, if set, overrides it.
 name: Deploy
 
 on:
@@ -29,4 +30,4 @@ jobs:
         run: npx -y wrangler@4 pages deploy site --project-name avantgarde-site --branch main --commit-hash "$GITHUB_SHA" --commit-message "${GITHUB_SHA::7}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}

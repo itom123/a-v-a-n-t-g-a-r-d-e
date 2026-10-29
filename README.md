@@ -31,7 +31,7 @@ tests/                   AG LAB 引擎测试
 
 ## 部署
 
-- **自动**：推送到 `main` 即部署（`.github/workflows/deploy.yml`）。仓库需要两个 Secret：`CLOUDFLARE_API_TOKEN`（权限 Cloudflare Pages: Edit）和 `CLOUDFLARE_ACCOUNT_ID`。
+- **自动**：推送到 `main` 即部署（`.github/workflows/deploy.yml`）。仓库需要 Secret `CLOUDFLARE_API_TOKEN`（权限 Account → Cloudflare Pages → Edit）；账户 ID 已写在工作流里。
 - **手动**：`npm run deploy`（需要先登录 `npx wrangler login`）。
 
 ## 注意
