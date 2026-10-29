@@ -13,8 +13,8 @@
     {
       "binding": "DB",
       "database_name": "ag-lab",
-      // Fill in after `npx wrangler d1 create ag-lab` (an ID, not a secret)
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Created 2026-10-29 in APAC (an ID, not a secret)
+      "database_id": "7c77dc9f-ff38-4c79-a900-6fb8f396998d",
       "migrations_dir": "migrations"
     }
   ],

@@ -15,10 +15,7 @@ The page sends result **keys** only (type, sign numbers, archetype…). Every em
 
 1. **Workers Paid plan.** Sending to any address needs it (Dashboard → Workers & Pages → Plans).
 2. **Onboard the domain for sending.** Go to Compute → Email Service → Email Sending → Onboard Domain → `a-v-a-n-t-g-a-r-d-e.com`. Cloudflare adds the SPF, DKIM and DMARC records.
-3. **Create the database** and paste its ID into `wrangler.jsonc` (`database_id`):
-   ```bash
-   cd workers/lab-results && npx -y wrangler@4 d1 create ag-lab
-   ```
+3. **Database:** done. `ag-lab` (APAC) exists and its ID is in `wrangler.jsonc`. The deploy creates the tables (`d1 migrations apply`).
 4. **Turnstile (spam protection):**
    - Create a widget for `www.a-v-a-n-t-g-a-r-d-e.com` under Dashboard → Turnstile.
    - Put the **site key** in `site/lab/js/lab-content.js` → `meta.turnstileSiteKey`.
