@@ -5,8 +5,8 @@ It runs on the site's own domain under `/api/lab/*`, next to the Pages site.
 
 | Route | What it does |
 | --- | --- |
-| `POST /api/lab/results` | "Email me my results": checks consent, Turnstile and rate limits, stores the result (and, with research consent, the item answers), then sends the reading to the visitor. If they ticked "contact me", it also notifies `STUDIO_TO`. |
-| `POST /api/lab/lead` | The unlock form: stores the lead and notifies `STUDIO_TO`. |
+| `POST /api/lab/lead` | The results page's one form (unlock + 1:1 reading). Stores the lead and notifies `STUDIO_TO`. If the visitor leaves an email, it also sends them the full report: the web reading plus about twice as much again, in the studio email template. |
+| `POST /api/lab/results` | Report-only endpoint (email + consent, Turnstile, rate limits). The page no longer shows a separate email form, so nothing calls it today; it's kept for a future "send again" link. |
 | cron, daily | Deletes everything older than 12 months, as the privacy notice promises. |
 
 The page sends result **keys** only (type, sign numbers, archetype…). Every email is written here from the shared copy in `site/lab/js/`, so the endpoint can't be used to send arbitrary content.
@@ -28,6 +28,15 @@ The page sends result **keys** only (type, sign numbers, archetype…). Every em
 6. **Turn on automatic deploys.** In GitHub, go to Settings → Secrets and variables → Actions → Variables and add `LAB_WORKER` = `on`. Each push to `main` then applies migrations and deploys the Worker after the Pages site.
 
 To deploy by hand instead: `npm run deploy:worker`.
+
+## Secrets and private endpoints
+
+This repo is public. Secrets never go in `wrangler.jsonc`, code or docs:
+```bash
+npx -y wrangler@4 secret put TURNSTILE_SECRET     # and any future key, e.g. CRM_API_KEY
+npx -y wrangler@4 secret put CRM_URL              # private endpoints are secrets too
+```
+Read them as `env.NAME`. `vars` in `wrangler.jsonc` is only for public values (sender addresses, the site URL). `npm test` includes a secret scan.
 
 ## Local development
 

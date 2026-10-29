@@ -168,6 +168,7 @@
     retakeConfirm: { zh: "重新测试会清除这台设备上保存的结果，确定吗？", en: "Starting again clears the results saved on this device. Continue?" },
     tabs: [
       { id: "who", zh: "你是谁", en: "Who you are" },
+      { id: "report", zh: "完整解读", en: "Full reading" },
       { id: "wuxing", zh: "五行气质", en: "Elements" },
       { id: "chart", zh: "专业排盘", en: "Full chart" },
       { id: "type", zh: "16型人格", en: "16-type" },
@@ -278,7 +279,7 @@
     leadLead: { zh: "导师会结合你的排盘、人格与作品集阶段，给出更具体的选校与准备建议。", en: "A tutor will combine your chart, profile and portfolio stage into specific advice on schools and preparation." },
     fName: { zh: "称呼", en: "Name" },
     fContact: { zh: "微信号或手机号", en: "WeChat ID or phone" },
-    fEmail: { zh: "邮箱（选填）", en: "Email (optional)" },
+    fEmail: { zh: "邮箱（选填，接收完整报告）", en: "Email (for the full report)" },
     fWho: { zh: "我是", en: "I am" },
     whoOpts: [{ v: "student", zh: "学生本人", en: "The student" }, { v: "parent", zh: "家长", en: "A parent" }],
     fAge: { zh: "学生年龄", en: "Student's age" },
@@ -318,6 +319,13 @@
       habit: { zh: "这周可以试试", en: "Try this week" },
       element: { zh: "五行底色", en: "Your elemental colour" }
     },
+    reportMail: {
+      inEmail: { zh: "留下邮箱，还会收到约两倍长的完整报告（附网页版全文）：", en: "Leave your email and we'll also send the full report, about twice as long again (with the web reading included):" },
+      more: { zh: "想要约两倍长的完整报告？在下方表单留下邮箱，我们会发给你。", en: "Want the full report, about twice as long again? Leave your email in the form below and we'll send it." },
+      moreBtn: { zh: "去留下邮箱", en: "Get the report" },
+      sent: { zh: "完整报告已发到你的邮箱（也看看垃圾邮件）。", en: "Your full report is on its way to your inbox (check spam too)." }
+    },
+
     methodTitle: { zh: "方法与说明", en: "Method and notes" },
     disclaimer: {
       zh: "本测试用于自我探索与创作方向参考，不构成任何预测，也不能预测录取结果；星座与五行部分仅供娱乐。院校匹配基于你填写的申请信息与编辑判断，申请前请以院校官方信息为准。",

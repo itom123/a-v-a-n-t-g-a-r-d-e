@@ -9,7 +9,7 @@
 
   var L = window.LAB;
   var SITE = window.SITE || { meta: {} };
-  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard, Astro = window.AGAstro;
+  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard, Astro = window.AGAstro, Report = window.AGReport;
   var app = document.getElementById("app");
   var KEY = "ag-lab-v2"; // v2: Likert items and the self-reported type
   var U = L.ui;
@@ -874,7 +874,7 @@
         '<nav class="r-tabs" aria-label="Sections">' + U.tabs.filter(function (tb) {
           return !(tb.id === "who" && !(c.astro && L.zodiac)) && !(tb.id === "paths" && !(L.careers && L.careers[ty.type]));
         }).map(function (tb) { return '<a href="#' + tb.id + '">' + T(tb) + "</a>"; }).join("") + "</nav>" +
-        sectionWho() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMethod() +
+        sectionWho() + sectionReport() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMethod() +
       "</article>";
 
     drawCard();
@@ -939,6 +939,46 @@
           return "<li><b>" + al.type + "</b> <span>" + T(L.types[al.type] ? L.types[al.type].name : "") + "</span><small>" + T(al.why) + "</small></li>";
         }).join("") + "</ul></div>" +
         '<div class="r-card"><h3 class="r-h3">' + T(P.habit) + "</h3><p>" + T(c.habit) + "</p></div>" +
+      "</div></div></section>";
+  }
+
+  /* ---------- long-form report (lab-report-*.js via report.js) ---------- */
+  function reportInput() {
+    var c = current, ch = c.chart, a = c.astro, e = ch.elements;
+    var strongest = e.pct.indexOf(Math.max.apply(null, e.pct));
+    return {
+      type: c.type.type, self: !!c.type.self,
+      dims: Object.keys(c.type.dims).reduce(function (o, k) { o[k] = c.type.dims[k].pctFirst; return o; }, {}),
+      element: ch.dayMaster.wx, dayMaster: ch.dayMaster.gan,
+      strength: ch.strength.level, strongest: strongest,
+      missing: e.missing.slice(), hidden: e.missing.filter(function (m) { return e.hidden[m] > 0; }),
+      use: ch.yongShen.use, avoid: ch.yongShen.avoid.slice(), geju: ch.geJu.name,
+      sun: a ? a.sun : null, moon: a ? a.moon : null, rising: a ? a.rising : null,
+      resilience: c.res.pct, mode5: c.topMode, mentor: c.match.mentors[0].key,
+      country: c.match.countries[0] ? c.match.countries[0].country : null,
+      country2: c.match.countries[1] ? c.match.countries[1].country : null,
+      mentor2: c.match.mentors[1] ? c.match.mentors[1].key : null,
+      timeline: state.profile.timeline, stage: state.profile.stage
+    };
+  }
+  function composeReport() {
+    if (!Report || !L.typeDeep) return null;
+    if (!current.report || current.report.lang !== state.lang) {
+      current.report = safe(function () { var r = Report.compose(reportInput(), L, state.lang); r.lang = state.lang; return r; }, null);
+    }
+    return current.report;
+  }
+  function sectionReport() {
+    var rep = composeReport();
+    if (!rep) return "";
+    return '<section class="r-sec" id="report"><div class="r-wrap r-wrap--narrow">' +
+      '<h2 class="r-h">' + T(tab("report")) + "</h2>" +
+      '<div class="report-doc">' + rep.page.map(function (sec) {
+        return '<section class="report-doc__sec"><h3>' + esc(sec.title) + "</h3>" + sec.items.map(function (it) {
+          return (it.k ? '<p class="report-doc__k">' + esc(it.k) + "</p>" : "") + "<p>" + esc(it.p) + "</p>";
+        }).join("") + "</section>";
+      }).join("") +
+      (state.unlocked ? "" : '<div class="report-doc__more"><p>' + T(U.reportMail.more) + '</p><a class="btn-main" href="#lead">' + T(U.reportMail.moreBtn) + ' <i aria-hidden="true">→</i></a></div>') +
       "</div></div></section>";
   }
 
@@ -1129,7 +1169,7 @@
       '<div class="schools-wrap' + (state.unlocked ? "" : " locked") + '">' + list +
         (state.unlocked || schools.length < 2 ? "" : '<div class="lock"><p>' + T(U.locked) + '</p><a class="btn-main" href="#lead">' + T(U.submit) + "</a></div>") +
       "</div>" +
-      (state.unlocked ? '<p class="ok">' + T(U.unlockedMsg) + "</p>" : leadForm()) +
+      (state.unlocked ? '<p class="ok">' + T(U.unlockedMsg) + (state.reportSent ? " " + T(U.reportMail.sent) : "") + "</p>" : leadForm()) +
       "</div></section>";
   }
 
@@ -1138,6 +1178,10 @@
     var ages = U.ageOpts.map(function (o) { return '<label class="radio"><input type="radio" name="age" value="' + o.v + '"' + (o.v === "18+" ? " checked" : "") + "><span>" + T(o) + "</span></label>"; }).join("");
     return '<form class="lead r-card r-card--dark" id="lead" novalidate>' +
       '<h3 class="lead__t">' + T(U.leadTitle) + "</h3><p>" + T(U.leadLead) + "</p>" +
+      (function () {
+        var rep = composeReport();
+        return rep ? '<p class="lead__k">' + T(U.reportMail.inEmail) + '</p><ul class="lead__list">' + rep.email.map(function (s) { return "<li>" + esc(s.title) + "</li>"; }).join("") + "</ul>" : "";
+      })() +
       '<div class="lead__grid">' +
         '<label class="inp inp--dark"><span>' + T(U.fName) + '</span><input name="name" autocomplete="name" required></label>' +
         '<label class="inp inp--dark"><span>' + T(U.fContact) + '</span><input name="contact" autocomplete="tel" required></label>' +
@@ -1244,7 +1288,7 @@
 
   /* ---------- result summary sent with the lead form (keys only) ---------- */
   function resultSummary() {
-    var c = current, ch = c.chart, a = c.astro;
+    var c = current, ch = c.chart, a = c.astro, ri = reportInput();
     return {
       mode: state.mode,
       archetype: ch.dayMaster.wx + c.type.temperament,
@@ -1261,7 +1305,9 @@
       sun: a ? a.sun : null, moon: a ? a.moon : null, moonAlt: a ? a.moonAlt : null, rising: a ? a.rising : null,
       mentor: c.match.mentors[0].key,
       countries: c.match.countries.map(function (x) { return x.country + ":" + x.score; }),
-      schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; })
+      schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; }),
+      strength: ri.strength, strongest: ri.strongest, missing: ri.missing, hidden: ri.hidden,
+      use: ri.use, avoid: ri.avoid, geju: ri.geju, mentor2: ri.mentor2
     };
   }
 
@@ -1326,10 +1372,17 @@
       btn.disabled = true;
       msg.textContent = tr(U.sending);
       fetch(L.meta.leadEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); unlock(); })
-        .catch(function () { btn.disabled = false; msg.textContent = tr(U.errSend); });
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json().catch(function () { return {}; }).then(function (d) { state.reportSent = !!(d && d.reportSent); unlock(); });
+        })
+        .catch(function () { btn.disabled = false; mailLead(payload, msg, unlock); }); // endpoint down: fall back to the visitor's email app
       return;
     }
+    mailLead(payload, msg, unlock);
+  }
+
+  function mailLead(payload, msg, unlock) {
     var email = (SITE.meta && SITE.meta.email) || "";
     var lines = [
       "AG LAB · " + payload.result.archetype + " · " + payload.result.type,

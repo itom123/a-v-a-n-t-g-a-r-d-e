@@ -24,8 +24,9 @@
   ],
   "triggers": { "crons": ["17 3 * * *"] },
   "vars": {
-    "FROM": "lab@a-v-a-n-t-g-a-r-d-e.com",
-    "FROM_NAME": "AG LAB · 先端艺培",
+    "FROM": "hello@a-v-a-n-t-g-a-r-d-e.com",
+    "FROM_NAME": "Avantgarde Studio 先端艺培",
+    "NOTIFY_FROM": "noreply@a-v-a-n-t-g-a-r-d-e.com",
     "STUDIO_TO": "hello@a-v-a-n-t-g-a-r-d-e.com",
     "SITE": "https://www.a-v-a-n-t-g-a-r-d-e.com",
     "MAX_PER_EMAIL_PER_DAY": "3"
