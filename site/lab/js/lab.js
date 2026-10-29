@@ -866,7 +866,8 @@
             '<p class="r-hero__d">' + T(a.d) + " " + T(tinfo.line) + "</p>" +
             '<p class="r-hero__dm">' + T(U.dayMaster) + SEP + "<b>" + ch.dayMaster.zh + Bazi.WX[el] + "</b>" + SEP + T(dmInfo.img) + " — " + T(dmInfo.d) + "</p>" +
             '<div class="r-hero__cta"><button class="btn-main btn-main--light" data-act="save-card">' + T(U.saveCard) + '</button>' +
-            '<button class="btn-ghost btn-ghost--light" data-act="copy-link">' + T(U.copyLink) + "</button></div>" +
+            '<button class="btn-ghost btn-ghost--light" data-act="copy-link">' + T(U.copyLink) + "</button>" +
+            '<button class="btn-ghost btn-ghost--light" data-act="retake">' + T(U.retake) + "</button></div>" +
           "</div>" +
           '<figure class="r-hero__card"><canvas id="card" width="1080" height="1440" aria-label="' + T(U.saveCard) + '"></canvas></figure>' +
         "</header>" +
@@ -1403,10 +1404,11 @@
         else go(quizDone() ? "profile" : Object.keys(state.answers).length ? "quiz" : "birth");
         break;
       case "restart": case "retake":
+        if (act === "retake" && !window.confirm(tr(U.retakeConfirm))) break;
         store.clear();
         state = fresh();
         current = null;
-        go(act === "retake" ? "birth" : "birth");
+        go("birth");
         break;
       case "to-intro": go("intro"); break;
       case "birth-next": if (birthReady()) go(state.mode === "self" ? "self" : "quiz"); break;
