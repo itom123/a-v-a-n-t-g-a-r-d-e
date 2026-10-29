@@ -195,6 +195,14 @@
       px += pill(x, d.type, px, py, false) + 14;
       pill(x, t(d.mode, lang) + (lang === "zh" ? "型" : ""), px, py, false);
 
+      // Sun · Moon · Rising
+      if (d.signs && d.signs.length) {
+        var signLine = d.signs.map(function (s) { return t(s.role, lang) + " " + t(s.name, lang); }).join("   ·   ");
+        x.fillStyle = "rgba(14,15,14,0.72)";
+        fitText(x, signLine, "500 {s}px " + UI, 28, W - 2 * M);
+        x.fillText(signLine, M, 658);
+      }
+
       // four pillars
       var bx = M, by = 680, bw = W - 2 * M, bh = 340;
       roundRect(x, bx, by, bw, bh, 28);

@@ -290,9 +290,10 @@ function stress(opt) {
     ".mentor__name": Object.values(L.mentors).map(tr),
     ".country h3": Object.values(L.countries).map(tr),
     ".school__name": L.schools.map((s) => tr(s.name)),
-    ".bi__s--l": L.items.map((i) => tr(i.a)),
-    ".bi__s--r": L.items.map((i) => tr(i.b)),
-    ".lk__s": L.resilience.map((i) => tr(i.t))
+    ".bi__s--one": L.items.concat(L.resilience, L.validity).map((i) => tr(i.t)),
+    ".paths h3": Object.values(L.careers).flatMap((c) => c.paths.map((x) => tr(x.name))),
+    ".sign__n": L.zodiac.map((z) => tr(z.name)),
+    ".selfbox__code span": Object.values(L.types).map((t) => tr(t.name))
   };
   for (const sel of Object.keys(sets)) {
     const el = document.querySelector(sel);
@@ -323,7 +324,7 @@ function stress(opt) {
 /* ------------------------------------------------------------------ */
 /* page states                                                         */
 /* ------------------------------------------------------------------ */
-const KEY = "ag-lab-v1";
+const KEY = "ag-lab-v2";
 const NOANIM = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}.reveal{opacity:1!important;transform:none!important}.loading__list li{opacity:1!important}";
 const DEMO_BIRTH = { calendar: "solar", year: 1998, month: 7, day: 3, hour: 9, minute: 30, unknownTime: false, placeMode: "coords", city: null, lat: "22.5431", lon: "114.0579", tzAuto: "Asia/Shanghai", tz: null, tzManual: false, xjTime: false, solarTime: "true", ziRule: "23" };
 const CITY = {
@@ -331,16 +332,18 @@ const CITY = {
   long: ["Universitäts- und Hansestadt Greifswald", "Universitäts- und Hansestadt Greifswald", "Mecklenburg-Vorpommern", "DE", 54.0891, 13.4024, "Europe/Berlin", 52731]
 };
 const PROFILE = { level: "MA", disciplines: ["curating", "photo"], stage: 2, timeline: 1, budget: 3, city: "metro", ielts: "6-6.5" };
+const SELF = { code: "ENFP", at: "T", source: "16p", sure: { EI: "clear", SN: "moderate", TF: "slight", JP: "moderate" }, skippedRes: false };
 const EMPTY_PROFILE = { level: null, disciplines: [], stage: null, timeline: null, budget: null, city: null, ielts: null };
 
 function labState(ids, lang, over) {
   const answers = {};
   if (over.answers !== "none") {
     ids.items.forEach((id, i) => { answers[id] = 1 + ((i * 5 + 3) % 7); });
-    ids.res.forEach((id, i) => { answers[id] = 1 + ((i * 3 + 1) % 5); });
+    ids.res.forEach((id, i) => { answers[id] = 1 + ((i * 3 + 1) % 7); });
+    ids.checks.forEach((id) => { answers[id] = 6; });
   }
   return Object.assign({
-    step: "intro", lang, birth: Object.assign({}, DEMO_BIRTH), answers, qIndex: 0, quizStartedAt: null, quizMs: 0,
+    step: "intro", lang, mode: "test", self: Object.assign({}, SELF), birth: Object.assign({}, DEMO_BIRTH), answers, qIndex: 0, quizStartedAt: null, quizMs: 0,
     profile: Object.assign({}, PROFILE), unlocked: false, src: {}, startedAt: 1
   }, over, { answers, birth: Object.assign({}, DEMO_BIRTH, over.birth || {}) });
 }
@@ -379,15 +382,20 @@ const STATES = [
   { id: "lab-birth-tzedit", url: "lab/index.html", storage: { step: "birth", answers: "none", birth: { placeMode: "city", city: CITY.urumqi, lat: "", lon: "", tzAuto: "Asia/Urumqi" } },
     prep: async (p) => { await p.click("[data-act=tz-edit]"); await p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true))); } },
   { id: "lab-birth-lunar", url: "lab/index.html", storage: { step: "birth", answers: "none", birth: { calendar: "lunar", month: 5, day: 9, unknownTime: true } } },
-  { id: "lab-quiz-bi", url: "lab/index.html", storage: { step: "quiz", answers: "none", qIndex: 5 } },
-  { id: "lab-quiz-likert", url: "lab/index.html", storage: { step: "quiz", qIndex: 48 } },
+  { id: "lab-quiz", url: "lab/index.html", storage: { step: "quiz", answers: "none", qIndex: 5 } },
+  { id: "lab-quiz-check", url: "lab/index.html", storage: { step: "quiz", answers: "none", qIndex: 11 } },
+  { id: "lab-quiz-res", url: "lab/index.html", storage: { step: "quiz", qIndex: 53 } },
+  { id: "lab-self", url: "lab/index.html", storage: { step: "self", mode: "self" } },
+  { id: "lab-self-empty", url: "lab/index.html", storage: { step: "self", mode: "self", self: { code: "", at: "", source: "16p", sure: { EI: "moderate", SN: "moderate", TF: "moderate", JP: "moderate" }, skippedRes: false } } },
+  { id: "lab-self-res", url: "lab/index.html", storage: { step: "quiz", mode: "self", answers: "none", qIndex: 0 } },
   { id: "lab-profile", url: "lab/index.html", storage: { step: "profile" } },
   { id: "lab-profile-empty", url: "lab/index.html", storage: { step: "profile", profile: EMPTY_PROFILE } },
   { id: "lab-loading", url: "lab/index.html", storage: { step: "loading" }, freeze: true },
   { id: "lab-result", url: "lab/index.html", storage: { step: "result" }, stress: true },
   { id: "lab-result-unlocked", url: "lab/index.html", storage: { step: "result", unlocked: true } },
+  { id: "lab-result-self", url: "lab/index.html", storage: { step: "result", mode: "self", self: Object.assign({}, SELF, { skippedRes: true }), birth: { unknownTime: true, hour: null, minute: null } } },
   { id: "lab-quiz-stress", url: "lab/index.html", storage: { step: "quiz", answers: "none", qIndex: 0 }, stressOnly: true },
-  { id: "lab-likert-stress", url: "lab/index.html", storage: { step: "quiz", qIndex: 48 }, stressOnly: true },
+  { id: "lab-likert-stress", url: "lab/index.html", storage: { step: "quiz", qIndex: 53 }, stressOnly: true },
   { id: "lab-modal", url: "lab/index.html", storage: { step: "result" }, ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.50",
     prep: async (p) => { await p.waitForTimeout(600); await p.click("[data-act=save-card]"); await p.waitForTimeout(300); } }
 ];
@@ -406,7 +414,7 @@ if (args.pages) {
 (async () => {
   await new Promise((r) => srv.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${srv.address().port}/`;
-  const browser = ENGINE === "webkit" ? await pw.webkit.launch() : await pw.chromium.launch();
+  const browser = ENGINE === "webkit" ? await pw.webkit.launch() : await pw.chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}); // PW_CHROMIUM: a browser installed outside Playwright
   const issues = new Map();
   let ids = null;
   if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
@@ -426,7 +434,7 @@ if (args.pages) {
         if (!ids) {
           const p0 = await ctx.newPage();
           await p0.goto(base + "lab/index.html?lang=zh", { waitUntil: "load" });
-          ids = await p0.evaluate(() => ({ items: window.LAB.items.map((i) => i.id), res: window.LAB.resilience.map((i) => i.id) }));
+          ids = await p0.evaluate(() => ({ items: window.LAB.items.map((i) => i.id), res: window.LAB.resilience.map((i) => i.id), checks: window.LAB.validity.map((i) => i.id) }));
           await p0.close();
         }
         const v = st.storage === null ? null : JSON.stringify(labState(ids, lang, st.storage));

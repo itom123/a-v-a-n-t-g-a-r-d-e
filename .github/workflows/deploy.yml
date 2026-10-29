@@ -1,5 +1,7 @@
-# Every push to main: run the engine tests, rebuild the pages, deploy site/ to Cloudflare Pages.
-# Needs the repository secret CLOUDFLARE_API_TOKEN (Account > Cloudflare Pages > Edit).
+# Every push to main: run the engine and Worker tests, rebuild the pages, deploy site/ to Cloudflare Pages,
+# then (once set up, see workers/lab-results/README.md) the AG LAB results Worker.
+# Needs the repository secret CLOUDFLARE_API_TOKEN (Account > Cloudflare Pages > Edit; for the Worker also
+# Workers Scripts, D1, Workers Routes and Email Sending > Edit).
 # The account ID is not a secret; a CLOUDFLARE_ACCOUNT_ID secret, if set, overrides it.
 name: Deploy
 
@@ -25,9 +27,21 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: node tests/engine.test.js
+      - run: node workers/lab-results/selftest.js
       - run: npm run build
       - name: Deploy to Cloudflare Pages
         run: npx -y wrangler@4 pages deploy site --project-name avantgarde-site --branch main --commit-hash "$GITHUB_SHA" --commit-message "${GITHUB_SHA::7}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}
+      # Off until the one-time setup in workers/lab-results/README.md is done; then set the
+      # repository variable LAB_WORKER to "on" (Settings > Secrets and variables > Actions > Variables).
+      - name: Deploy the AG LAB results Worker
+        if: ${{ vars.LAB_WORKER == 'on' }}
+        working-directory: workers/lab-results
+        run: |
+          npx -y wrangler@4 d1 migrations apply ag-lab --remote
+          npx -y wrangler@4 deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}

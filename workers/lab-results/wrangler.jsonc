@@ -1,0 +1,34 @@
+// AG LAB results Worker: stores submissions in D1 and emails results with Cloudflare Email Service.
+// Served on the site's own domain under /api/lab/*, so the lab page calls it without CORS.
+// Secrets (never commit): `npx wrangler secret put TURNSTILE_SECRET`. See README.md for first-time setup.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "ag-lab-results",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-15",
+  "routes": [
+    { "pattern": "www.a-v-a-n-t-g-a-r-d-e.com/api/lab/*", "zone_name": "a-v-a-n-t-g-a-r-d-e.com" }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ag-lab",
+      // Fill in after `npx wrangler d1 create ag-lab` (an ID, not a secret)
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "send_email": [{ "name": "EMAIL" }],
+  "ratelimits": [
+    { "name": "LIMIT", "namespace_id": "4201", "simple": { "limit": 5, "period": 60 } }
+  ],
+  "triggers": { "crons": ["17 3 * * *"] },
+  "vars": {
+    "FROM": "lab@a-v-a-n-t-g-a-r-d-e.com",
+    "FROM_NAME": "AG LAB · 先端艺培",
+    "STUDIO_TO": "hello@a-v-a-n-t-g-a-r-d-e.com",
+    "SITE": "https://www.a-v-a-n-t-g-a-r-d-e.com",
+    "MAX_PER_EMAIL_PER_DAY": "3"
+  },
+  "observability": { "enabled": true }
+}

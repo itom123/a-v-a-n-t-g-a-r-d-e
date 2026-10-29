@@ -276,11 +276,11 @@ window.SITE = {
   lab: {
     hidden: false,
     href: "lab/",
-    kicker: { zh: "AG LAB · 免费测试 · 约 8 分钟", en: "AG LAB · Free · about 8 minutes" },
+    kicker: { zh: "AG LAB · 免费测试 · 约 10 分钟", en: "AG LAB · Free · about 10 minutes" },
     title: { zh: "你是哪一种\u200b创作者？", en: "What kind of maker are you?" },
     body: {
-      zh: "出生信息、56 道题和你的申请计划，合成一张创作人格卡片，并匹配国家、院校与导师风格。仅供自我探索参考。",
-      en: "Your birth details, 56 questions and your plans become a creative persona card, matched with countries, schools and mentor styles. For self-reflection only."
+      zh: "出生信息、60 道题（或直接填你的 MBTI）和你的申请计划，合成一张创作人格卡片：你可能成为怎样的艺术家与研究者、星座与五行怎样组合，再匹配国家、院校与导师风格。仅供自我探索参考。",
+      en: "Your birth details, 60 questions (or just your MBTI) and your plans become a creative persona card: the artist or researcher you might become, how your star signs and elements blend, and matching countries, schools and mentor styles. For self-reflection only."
     },
     cta: { zh: "开始测试", en: "Take the test" },
     parts: { zh: ["四柱八字", "16 型创作人格", "院校匹配"], en: ["Four Pillars", "16-type profile", "School match"] }
