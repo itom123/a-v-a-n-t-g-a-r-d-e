@@ -317,21 +317,6 @@
       habit: { zh: "这周可以试试", en: "Try this week" },
       element: { zh: "五行底色", en: "Your elemental colour" }
     },
-    mail: {
-      title: { zh: "把结果\u200b发到我的邮箱", en: "Email me my results" },
-      lead: { zh: "完整解读会发到你的邮箱，方便保存和以后对照。", en: "We'll send the full reading to your inbox so you can keep it." },
-      email: { zh: "邮箱", en: "Email" },
-      cStore: { zh: "我同意先端艺培保存我的测试结果与邮箱（由 Cloudflare 存放在中国境外，最长 12 个月），用于发送结果。", en: "I agree that Avantgarde Studio may keep my results and email (stored by Cloudflare outside mainland China, for up to 12 months) to send me my results." },
-      cAge: { zh: "我已满 14 岁，或已由家长陪同填写。", en: "I'm 14 or over, or a parent is helping me." },
-      cResearch: { zh: "（选填）允许匿名使用我的逐题作答，用于改进测试。", en: "(Optional) Use my individual answers anonymously to improve the test." },
-      cContact: { zh: "（选填）也请导师通过邮件联系我，聊聊申请。", en: "(Optional) I'd also like a tutor to email me about applying." },
-      send: { zh: "发送结果", en: "Send my results" },
-      sent: { zh: "已发送！请查收邮箱（也看看垃圾邮件）。", en: "Sent! Check your inbox (and your spam folder)." },
-      err: { zh: "请填写有效邮箱，并勾选两个必需的同意项。", en: "Please enter a valid email and tick the two required boxes." },
-      fail: { zh: "暂时没有发送成功，请稍后再试。", en: "That didn't send. Please try again in a moment." },
-      limited: { zh: "发送太频繁了，请稍后再试。", en: "Too many tries — please wait a little and try again." }
-    },
-
     methodTitle: { zh: "方法与说明", en: "Method and notes" },
     disclaimer: {
       zh: "本测试用于自我探索与创作方向参考，不构成任何预测，也不能预测录取结果；星座与五行部分仅供娱乐。院校匹配基于你填写的申请信息与编辑判断，申请前请以院校官方信息为准。",
