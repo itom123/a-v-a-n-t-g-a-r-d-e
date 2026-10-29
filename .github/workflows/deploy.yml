@@ -20,6 +20,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      # Re-running an old run would put an old version of the site and Worker live again
+      # (it happened: a re-run of #1 brought back the removed "email me my results" form).
+      - name: Deploy only the latest main
+        run: |
+          head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::This run is for ${GITHUB_SHA::7}, but main is at ${head::7}. Re-run the latest Deploy run (or use Run workflow) instead."
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22

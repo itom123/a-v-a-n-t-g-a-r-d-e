@@ -1,0 +1,5 @@
+# Cloudflare Pages response headers.
+# AG LAB scripts and styles have no version in their URLs, so make browsers check for a new copy
+# on every visit; otherwise a visitor can keep running an old lab.js after a deploy.
+/lab/*
+  Cache-Control: no-cache
