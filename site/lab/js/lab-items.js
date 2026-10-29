@@ -78,9 +78,9 @@
     { id: "r8", key: -1, t: { zh: "作品没做到完美，我就不想拿给别人看", en: "I hold back from showing work until it feels perfect" } }
   ];
   L.validity = [
-    { id: "v1", kind: "instructed", want: 6, t: { zh: "为了确认你在认真阅读，这一题请选择「同意」。", en: "To show you’re reading carefully, choose “Agree” here." } },
+    { id: "v1", kind: "instructed", want: 6, t: { zh: "小小检查：这一题请选「同意」，确认你在认真读题。", en: "Quick check: choose “Agree” for this one, to show you’re reading carefully." } },
     { id: "v2", kind: "infrequency", t: { zh: "我去过世界上的每一座美术馆。", en: "I have visited every art museum in the world." } },
-    { id: "v3", kind: "instructed", want: 2, t: { zh: "为了确认你在认真作答，这一题请选择「不同意」。", en: "To check you’re paying attention, choose “Disagree” here." } },
+    { id: "v3", kind: "instructed", want: 2, t: { zh: "再检查一次：这一题请选「不同意」。", en: "One more check: choose “Disagree” for this one." } },
     { id: "v4", kind: "infrequency", t: { zh: "我这辈子从来没有拿过一支铅笔。", en: "I have never held a pencil in my life." } }
   ];
   // Near-synonym pairs within the same pair of preferences, used for the inconsistency index
