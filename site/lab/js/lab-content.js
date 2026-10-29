@@ -10,9 +10,6 @@
   meta: {
     // POST endpoints served by workers/lab-results (same origin). Empty → falls back to email.
     leadEndpoint: "/api/lab/lead",
-    resultsEndpoint: "/api/lab/results",
-    // Cloudflare Turnstile site key (public). Empty → no widget; the Worker then skips the check.
-    turnstileSiteKey: "",
     // Public URL of this test, printed as a QR code on the share card.
     // Empty → uses SITE.meta.domain + "/lab/".
     shareUrl: "",
@@ -279,7 +276,7 @@
     leadLead: { zh: "导师会结合你的排盘、人格与作品集阶段，给出更具体的选校与准备建议。", en: "A tutor will combine your chart, profile and portfolio stage into specific advice on schools and preparation." },
     fName: { zh: "称呼", en: "Name" },
     fContact: { zh: "微信号或手机号", en: "WeChat ID or phone" },
-    fEmail: { zh: "邮箱（选填，接收完整报告）", en: "Email (for the full report)" },
+    fEmail: { zh: "邮箱（接收完整报告）", en: "Email (for your full report)" },
     fWho: { zh: "我是", en: "I am" },
     whoOpts: [{ v: "student", zh: "学生本人", en: "The student" }, { v: "parent", zh: "家长", en: "A parent" }],
     fAge: { zh: "学生年龄", en: "Student's age" },
@@ -294,7 +291,8 @@
     sending: { zh: "提交中…", en: "Sending…" },
     unlockedMsg: { zh: "已解锁！导师会在 2 个工作日内联系你。", en: "Unlocked! A tutor will contact you within 2 working days." },
     mailFallback: { zh: "已打开邮件，发送后即完成登记。", en: "Your email app is open — send it to finish." },
-    errRequired: { zh: "请填写称呼与联系方式，并勾选必需的同意项。", en: "Please add your name and contact, and tick the required boxes." },
+    errRequired: { zh: "请填写称呼、联系方式和邮箱，并勾选必需的同意项。", en: "Please add your name, contact and email, and tick the required boxes." },
+    errEmail: { zh: "请检查邮箱地址，完整报告会发到这里。", en: "Please check your email address. Your full report goes there." },
     errSend: { zh: "提交没有成功，请稍后再试，或直接添加我们的微信。", en: "That didn't go through. Please try again, or add us on WeChat." },
 
     who: {
@@ -320,10 +318,9 @@
       element: { zh: "五行底色", en: "Your elemental colour" }
     },
     reportMail: {
-      inEmail: { zh: "留下邮箱，还会收到约两倍长的完整报告（附网页版全文）：", en: "Leave your email and we'll also send the full report, about twice as long again (with the web reading included):" },
-      more: { zh: "想要约两倍长的完整报告？在下方表单留下邮箱，我们会发给你。", en: "Want the full report, about twice as long again? Leave your email in the form below and we'll send it." },
-      moreBtn: { zh: "去留下邮箱", en: "Get the report" },
-      sent: { zh: "完整报告已发到你的邮箱（也看看垃圾邮件）。", en: "Your full report is on its way to your inbox (check spam too)." }
+      inEmail: { zh: "提交后，我们会把约两倍长的完整报告（附网页版全文）发到你的邮箱：", en: "When you submit, we email you the full report, about twice as long again (with the web reading included):" },
+      sent: { zh: "完整报告已发到你的邮箱（也看看垃圾邮件）。", en: "Your full report is on its way to your inbox (check spam too)." },
+      notSent: { zh: "完整报告这次没能发出，导师联系你时会一并发送。", en: "We couldn't send the full report just now. Your tutor will send it when they get in touch." }
     },
 
     methodTitle: { zh: "方法与说明", en: "Method and notes" },

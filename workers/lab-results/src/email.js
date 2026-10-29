@@ -34,7 +34,7 @@ const COPY = {
     lab: "回到 AG LAB，或把测试分享给朋友",
     wechat: "也可以扫码添加企业微信",
     wechatWho: "XG · 先端艺培学术主理",
-    small: "你收到这封邮件，是因为你在 AG LAB 测试页请我们把结果发给你。结果会保存最长 12 个月；想提前删除，直接回复这封邮件即可。本报告仅供自我探索与娱乐，不构成任何预测，也不能预测录取结果。",
+    small: "你收到这封邮件，是因为你在 AG LAB 结果页的「解锁完整院校清单 + 1 对 1 解读」表单中留下了这个邮箱。这是一次性发送的报告，我们不会因此给你发营销邮件。你的信息最长保存 12 个月；想查阅或提前删除，直接回复这封邮件即可。本报告仅供自我探索与娱乐，不构成任何预测，也不能预测录取结果。",
     preheader: (p, ty) => `${p} · ${ty}：你的完整创作人格报告、作品集项目与 12 个月计划。`,
     subject: (p, ty) => `你的 AG LAB 创作人格报告：${p} · ${ty}｜先端艺培`
   },
@@ -51,7 +51,7 @@ const COPY = {
     lab: "Back to AG LAB, or share the test with a friend",
     wechat: "Prefer WeChat? Scan to add us on WeCom",
     wechatWho: "XG · Academic lead, Avantgarde Studio",
-    small: "You’re getting this because you asked for your results on the AG LAB page. We keep them for up to 12 months; reply to this email to have them deleted sooner. This report is for self-reflection and fun; it makes no predictions and cannot predict admission.",
+    small: "You’re getting this because you left this address in the “Unlock the full school list + a 1:1 reading” form on the AG LAB results page. It is a one-off report; we won’t add you to a mailing list. We keep your details for up to 12 months; reply to this email to see them or have them deleted sooner. This report is for self-reflection and fun; it makes no predictions and cannot predict admission.",
     preheader: (p, ty) => `${p} · ${ty}: your full creative persona report, portfolio projects and 12-month plan.`,
     subject: (p, ty) => `Your AG LAB persona report: ${p} · ${ty} | Avantgarde Studio`
   }
@@ -136,7 +136,7 @@ export function renderResultEmail(r, lang, site, profile) {
   };
 }
 
-/** Plain-text note to the studio inbox for a lead or a "please contact me". */
+/** Plain-text note to the studio inbox for a lead. */
 export function renderStudioEmail(kind, row, payload) {
   const r = payload.result || payload.summary || {};
   const persona = LAB.archetypes[r.archetype] ? `${LAB.archetypes[r.archetype].zh} / ${LAB.archetypes[r.archetype].en}` : "";

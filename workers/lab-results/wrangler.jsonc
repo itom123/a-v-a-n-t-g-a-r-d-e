@@ -1,6 +1,6 @@
 // AG LAB results Worker: stores submissions in D1 and emails results with Cloudflare Email Service.
 // Served on the site's own domain under /api/lab/*, so the lab page calls it without CORS.
-// Secrets (never commit): `npx wrangler secret put TURNSTILE_SECRET`. See README.md for first-time setup.
+// Secrets never go in this file: `npx wrangler secret put NAME`. See README.md for first-time setup.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "ag-lab-results",

@@ -1,7 +1,7 @@
 /*
  * AG LAB results Worker
- *   POST /api/lab/results  "Email me my results": store in D1, send the reading to the visitor
- *   POST /api/lab/lead     the unlock form: store in D1, notify the studio inbox
+ *   POST /api/lab/lead     the results page's one form (unlock + 1:1 reading): store in D1,
+ *                          notify the studio inbox and email the visitor the full report
  *   cron                   delete everything older than 12 months (privacy notice)
  * Requests carry result keys only; every email is written here from the shared lab copy.
  */
@@ -66,27 +66,9 @@ export function cleanResult(r) {
 }
 function temperament(t) { return t[1] === "N" ? (t[2] === "F" ? "NF" : "NT") : t[3] === "J" ? "SJ" : "SP"; }
 
-function cleanAnswers(a) {
-  if (!Array.isArray(a)) return null;
-  const ids = new Set(LAB.items.concat(LAB.resilience, LAB.validity).map((x) => x.id));
-  const out = a.filter((x) => Array.isArray(x) && ids.has(x[0]) && Number.isInteger(x[1]) && x[1] >= 0 && x[1] <= 7).slice(0, 80);
-  return out.length ? out : null;
-}
 function cleanObj(o, maxLen) {
   const s = JSON.stringify(o && typeof o === "object" ? o : {});
   return s.length > maxLen ? "{}" : s;
-}
-
-async function verifyTurnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET) return true; // not configured yet
-  if (!token) return false;
-  const body = new FormData();
-  body.append("secret", env.TURNSTILE_SECRET);
-  body.append("response", token);
-  if (ip) body.append("remoteip", ip);
-  const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body });
-  const d = await r.json().catch(() => ({}));
-  return !!d.success;
 }
 
 async function limited(env, key) {
@@ -120,42 +102,6 @@ async function send(env, msg) {
   }
 }
 
-async function handleResults(req, env) {
-  const p = await req.json().catch(() => null);
-  if (!p) throw new Bad("json");
-  if (p.hp) return json({ ok: true }); // honeypot: pretend it worked
-  const email = str(p.email, 120).toLowerCase();
-  if (!EMAIL_RE.test(email)) throw new Bad("email");
-  const consent = p.consent || {};
-  if (consent.store !== true || consent.age !== true) throw new Bad("consent");
-  const ip = req.headers.get("CF-Connecting-IP") || "";
-  if (await limited(env, "ip:" + ip)) throw new Bad("rate", 429);
-  if (!(await verifyTurnstile(env, str(p.turnstile, 2048), ip))) throw new Bad("turnstile", 403);
-  const max = parseInt(env.MAX_PER_EMAIL_PER_DAY || "3", 10);
-  const now = Date.now();
-  const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM contacts WHERE email = ?1 AND created_at > ?2").bind(email, now - DAY).first();
-  if (recent && recent.n >= max) throw new Bad("rate", 429);
-
-  const r = cleanResult(p.result);
-  const lang = p.lang === "en" ? "en" : "zh";
-  const answers = consent.research === true && r.mode === "test" ? cleanAnswers(p.answers) : null;
-  const id = crypto.randomUUID();
-  await insertSubmission(env, id, now, "results", p, r, answers);
-
-  const mail = renderResultEmail(r, lang, env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com", p.profile);
-  const sent = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text, headers: { "Auto-Submitted": "auto-generated" } });
-  await env.DB.prepare(
-    "INSERT INTO contacts (id, submission_id, created_at, purpose, email, consents, email_status, message_id) VALUES (?1, ?2, ?3, 'results', ?4, ?5, ?6, ?7)"
-  ).bind(crypto.randomUUID(), id, now, email, JSON.stringify({ store: true, age: true, research: !!answers, contact: consent.contact === true }), sent.status, sent.id).run();
-
-  if (consent.contact === true && env.STUDIO_TO) {
-    const note = renderStudioEmail("results", { id }, { email, result: r, profile: p.profile, source: p.source });
-    await send(env, { from: notifyFrom(env), to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text });
-  }
-  if (sent.status !== "sent") return json({ ok: false, error: "send" }, 502);
-  return json({ ok: true, id });
-}
-
 async function handleLead(req, env) {
   const p = await req.json().catch(() => null);
   if (!p) throw new Bad("json");
@@ -163,7 +109,7 @@ async function handleLead(req, env) {
   const c = p.contact || {}, consent = p.consent || {};
   const name = str(c.name, 60), contact = str(c.contact, 80), email = str(c.email, 120).toLowerCase();
   if (!name || !contact) throw new Bad("contact");
-  if (email && !EMAIL_RE.test(email)) throw new Bad("email");
+  if (!EMAIL_RE.test(email)) throw new Bad("email"); // required: the full report goes there
   if (consent.privacy !== true || consent.crossBorder !== true) throw new Bad("consent");
   if (c.age === "u14" && consent.guardian !== true) throw new Bad("guardian");
   const ip = req.headers.get("CF-Connecting-IP") || "";
@@ -171,27 +117,27 @@ async function handleLead(req, env) {
 
   const r = cleanResult(p.summary);
   const now = Date.now(), id = crypto.randomUUID();
-  await insertSubmission(env, id, now, "lead", p, r, null);
+  // Storage problems must never stop the emails: log and carry on.
+  const stored = await insertSubmission(env, id, now, "lead", p, r, null).then(() => true, (e) => { console.error("lead insert", e); return false; });
   const chart = consent.chart === true && p.chart ? cleanObj(p.chart, 1200) : null;
   const note = renderStudioEmail("lead", { id }, { contact: { name, contact, email, who: str(c.who, 10), age: str(c.age, 10) }, summary: r, profile: p.profile, source: p.source, chart: chart ? JSON.parse(chart) : null });
-  const sent = env.STUDIO_TO ? await send(env, Object.assign({ from: notifyFrom(env), to: env.STUDIO_TO, subject: note.subject, text: note.text }, email ? { replyTo: email } : {})) : { status: "skipped", id: null };
+  const sent = env.STUDIO_TO ? await send(env, { from: notifyFrom(env), to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text }) : { status: "skipped", id: null };
 
   // The single results-page form: an email address there also gets the full report (≈ twice the web reading).
-  let report = { status: "no email", id: null };
-  if (email) {
-    const max = parseInt(env.MAX_PER_EMAIL_PER_DAY || "3", 10);
-    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM contacts WHERE email = ?1 AND created_at > ?2").bind(email, now - DAY).first();
-    if (recent && recent.n >= max) report = { status: "rate-limited", id: null };
-    else {
-      const mail = renderResultEmail(r, p.lang === "en" ? "en" : "zh", env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com", p.profile);
-      report = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text, headers: { "Auto-Submitted": "auto-generated" } });
-    }
+  let report;
+  const max = parseInt(env.MAX_PER_EMAIL_PER_DAY || "3", 10);
+  const recent = stored ? await env.DB.prepare("SELECT COUNT(*) AS n FROM contacts WHERE email = ?1 AND created_at > ?2").bind(email, now - DAY).first().catch(() => null) : null;
+  if (recent && recent.n >= max) report = { status: "rate-limited", id: null };
+  else {
+    const mail = renderResultEmail(r, p.lang === "en" ? "en" : "zh", env.SITE || "https://www.a-v-a-n-t-g-a-r-d-e.com", p.profile);
+    report = await send(env, { to: email, subject: mail.subject, html: mail.html, text: mail.text, headers: { "Auto-Submitted": "auto-generated" } });
   }
-  await env.DB.prepare(
+  if (report.status !== "sent") console.error("report email", report.status);
+  if (stored) await env.DB.prepare(
     "INSERT INTO contacts (id, submission_id, created_at, purpose, email, name, contact, who, age, consents, extra, email_status, message_id) VALUES (?1, ?2, ?3, 'lead', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"
   ).bind(crypto.randomUUID(), id, now, email || null, name, contact, str(c.who, 10), str(c.age, 10),
     JSON.stringify({ privacy: true, crossBorder: true, guardian: consent.guardian === true, chart: !!chart }), chart,
-    `studio: ${sent.status}; report: ${report.status}`, report.id || sent.id).run();
+    `studio: ${sent.status}; report: ${report.status}`, report.id || sent.id).run().catch((e) => console.error("contact insert", e));
   return json({ ok: true, id, reportSent: report.status === "sent" });
 }
 
@@ -213,7 +159,6 @@ export default {
     const origin = req.headers.get("Origin");
     if (origin && env.SITE && origin !== env.SITE && !/^http:\/\/localhost(:\d+)?$/.test(origin)) return json({ ok: false, error: "origin" }, 403);
     try {
-      if (url.pathname === "/api/lab/results") return await handleResults(req, env);
       if (url.pathname === "/api/lab/lead") return await handleLead(req, env);
       return json({ ok: false, error: "not found" }, 404);
     } catch (e) {

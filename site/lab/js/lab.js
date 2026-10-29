@@ -978,7 +978,6 @@
           return (it.k ? '<p class="report-doc__k">' + esc(it.k) + "</p>" : "") + "<p>" + esc(it.p) + "</p>";
         }).join("") + "</section>";
       }).join("") +
-      (state.unlocked ? "" : '<div class="report-doc__more"><p>' + T(U.reportMail.more) + '</p><a class="btn-main" href="#lead">' + T(U.reportMail.moreBtn) + ' <i aria-hidden="true">→</i></a></div>') +
       "</div></div></section>";
   }
 
@@ -1169,7 +1168,7 @@
       '<div class="schools-wrap' + (state.unlocked ? "" : " locked") + '">' + list +
         (state.unlocked || schools.length < 2 ? "" : '<div class="lock"><p>' + T(U.locked) + '</p><a class="btn-main" href="#lead">' + T(U.submit) + "</a></div>") +
       "</div>" +
-      (state.unlocked ? '<p class="ok">' + T(U.unlockedMsg) + (state.reportSent ? " " + T(U.reportMail.sent) : "") + "</p>" : leadForm()) +
+      (state.unlocked ? '<p class="ok">' + T(U.unlockedMsg) + (state.reportSent ? " " + T(U.reportMail.sent) : state.reportSent === false ? " " + T(U.reportMail.notSent) : "") + "</p>" : leadForm()) +
       "</div></section>";
   }
 
@@ -1185,7 +1184,7 @@
       '<div class="lead__grid">' +
         '<label class="inp inp--dark"><span>' + T(U.fName) + '</span><input name="name" autocomplete="name" required></label>' +
         '<label class="inp inp--dark"><span>' + T(U.fContact) + '</span><input name="contact" autocomplete="tel" required></label>' +
-        '<label class="inp inp--dark"><span>' + T(U.fEmail) + '</span><input name="email" type="email" autocomplete="email"></label>' +
+        '<label class="inp inp--dark"><span>' + T(U.fEmail) + '</span><input name="email" type="email" autocomplete="email" required></label>' +
       "</div>" +
       '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
       '<fieldset class="lead__f"><legend>' + T(U.fWho) + "</legend>" + who + "</fieldset>" +
@@ -1362,9 +1361,11 @@
   function submitLead(form) {
     var fd = new FormData(form), msg = $("#lead-msg");
     var minor = fd.get("age") === "u14";
-    var ok = String(fd.get("name") || "").trim() && String(fd.get("contact") || "").trim() &&
+    var email = String(fd.get("email") || "").trim();
+    var ok = String(fd.get("name") || "").trim() && String(fd.get("contact") || "").trim() && email &&
       fd.get("cPrivacy") && fd.get("cCross") && (!minor || fd.get("cGuardian"));
     if (!ok) { msg.textContent = tr(U.errRequired); return; }
+    if (!/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(email)) { msg.textContent = tr(U.errEmail); return; }
     var payload = leadPayload(form);
     var btn = form.querySelector("button[type=submit]");
     var unlock = function () { state.unlocked = true; persist(); rerenderMatch(); };
