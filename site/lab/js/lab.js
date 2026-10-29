@@ -1397,9 +1397,13 @@
       msg.textContent = tr(U.sending);
       fetch(L.meta.leadEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); unlock(); })
-        .catch(function () { btn.disabled = false; msg.textContent = tr(U.errSend); });
+        .catch(function () { btn.disabled = false; mailLead(payload, msg, unlock); }); // endpoint down: fall back to the visitor's email app
       return;
     }
+    mailLead(payload, msg, unlock);
+  }
+
+  function mailLead(payload, msg, unlock) {
     var email = (SITE.meta && SITE.meta.email) || "";
     var lines = [
       "AG LAB · " + payload.result.archetype + " · " + payload.result.type,
