@@ -866,7 +866,6 @@
             '<p class="r-hero__d">' + T(a.d) + " " + T(tinfo.line) + "</p>" +
             '<p class="r-hero__dm">' + T(U.dayMaster) + SEP + "<b>" + ch.dayMaster.zh + Bazi.WX[el] + "</b>" + SEP + T(dmInfo.img) + " — " + T(dmInfo.d) + "</p>" +
             '<div class="r-hero__cta"><button class="btn-main btn-main--light" data-act="save-card">' + T(U.saveCard) + '</button>' +
-            '<a class="btn-ghost btn-ghost--light" href="#mail">' + T(U.mail.title) + "</a>" +
             '<button class="btn-ghost btn-ghost--light" data-act="copy-link">' + T(U.copyLink) + "</button></div>" +
           "</div>" +
           '<figure class="r-hero__card"><canvas id="card" width="1080" height="1440" aria-label="' + T(U.saveCard) + '"></canvas></figure>' +
@@ -874,11 +873,10 @@
         '<nav class="r-tabs" aria-label="Sections">' + U.tabs.filter(function (tb) {
           return !(tb.id === "who" && !(c.astro && L.zodiac)) && !(tb.id === "paths" && !(L.careers && L.careers[ty.type]));
         }).map(function (tb) { return '<a href="#' + tb.id + '">' + T(tb) + "</a>"; }).join("") + "</nav>" +
-        sectionWho() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMail() + sectionMethod() +
+        sectionWho() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMethod() +
       "</article>";
 
     drawCard();
-    mountTurnstile();
   }
 
   function tab(id) { return U.tabs.filter(function (t) { return t.id === id; })[0]; }
@@ -941,35 +939,6 @@
         }).join("") + "</ul></div>" +
         '<div class="r-card"><h3 class="r-h3">' + T(P.habit) + "</h3><p>" + T(c.habit) + "</p></div>" +
       "</div></div></section>";
-  }
-
-  function sectionMail() {
-    var M = U.mail;
-    return '<section class="r-sec" id="mail"><div class="r-wrap r-wrap--narrow">' +
-      '<form class="mailf r-card" id="mailf" novalidate>' +
-        '<h3 class="lead__t">' + T(M.title) + "</h3><p>" + T(M.lead) + "</p>" +
-        '<label class="inp"><span>' + T(M.email) + '</span><input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
-        '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-        '<label class="check"><input type="checkbox" name="cStore"><span>' + T(M.cStore) + "</span></label>" +
-        '<label class="check"><input type="checkbox" name="cAge"><span>' + T(M.cAge) + "</span></label>" +
-        (state.mode === "test" ? '<label class="check"><input type="checkbox" name="cResearch"><span>' + T(M.cResearch) + "</span></label>" : "") +
-        '<label class="check"><input type="checkbox" name="cContact"><span>' + T(M.cContact) + "</span></label>" +
-        '<p class="hint"><a href="privacy.html" target="_blank" rel="noopener">' + T(U.privacyLink) + "</a></p>" +
-        (L.meta.turnstileSiteKey ? '<div class="ts" id="ts-mail"></div>' : "") +
-        '<button class="btn-main" type="submit">' + T(M.send) + ' <i aria-hidden="true">→</i></button>' +
-        '<p class="lead__msg" id="mail-msg" role="status"></p>' +
-      "</form></div></section>";
-  }
-
-  /* Cloudflare Turnstile: loaded only when a site key is configured */
-  var tsLoading = null;
-  function mountTurnstile() {
-    var key = L.meta.turnstileSiteKey, el = $("#ts-mail");
-    if (!key || !el) return;
-    if (!tsLoading) tsLoading = loadScript("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit");
-    tsLoading.then(function () {
-      if (window.turnstile && el.isConnected && !el.childElementCount) window.turnstile.render(el, { sitekey: key, theme: "light", language: state.lang === "zh" ? "zh-cn" : "en" });
-    }).catch(function () { /* the Worker reports the missing token */ });
   }
 
   function sectionWuxing() {
@@ -1272,7 +1241,7 @@
     }
   }
 
-  /* ---------- result summary sent by both forms (keys only; the Worker writes the email) ---------- */
+  /* ---------- result summary sent with the lead form (keys only) ---------- */
   function resultSummary() {
     var c = current, ch = c.chart, a = c.astro;
     return {
@@ -1293,46 +1262,6 @@
       countries: c.match.countries.map(function (x) { return x.country + ":" + x.score; }),
       schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; })
     };
-  }
-
-  function answerList() {
-    return Q().map(function (q) { return [q.item.id, state.answers[q.item.id] || 0]; });
-  }
-
-  function submitMail(form) {
-    var fd = new FormData(form), msg = $("#mail-msg"), M = U.mail;
-    var email = String(fd.get("email") || "").trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !fd.get("cStore") || !fd.get("cAge")) { msg.textContent = tr(M.err); return; }
-    var research = !!fd.get("cResearch") && state.mode === "test";
-    var payload = {
-      campaign: L.meta.campaign, version: L.meta.version, lang: state.lang,
-      hp: String(fd.get("website") || ""),
-      email: email.slice(0, 120),
-      consent: { store: true, age: true, research: research, contact: !!fd.get("cContact") },
-      turnstile: String(fd.get("cf-turnstile-response") || ""),
-      source: state.src || {},
-      profile: state.profile,
-      quizMs: state.quizMs || 0,
-      result: resultSummary(),
-      answers: research ? answerList() : null
-    };
-    var btn = form.querySelector("button[type=submit]");
-    if (!L.meta.resultsEndpoint) { msg.textContent = tr(M.fail); return; }
-    btn.disabled = true;
-    msg.textContent = tr(U.sending);
-    fetch(L.meta.resultsEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-      .then(function (r) {
-        if (r.status === 429) throw new Error("limited");
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        msg.textContent = tr(M.sent);
-        state.mailed = true;
-        persist();
-      })
-      .catch(function (e) {
-        btn.disabled = false;
-        msg.textContent = tr(e && e.message === "limited" ? M.limited : M.fail);
-        if (window.turnstile) { try { window.turnstile.reset(); } catch (x) { /* ignore */ } }
-      });
   }
 
   /* ---------- lead ---------- */
@@ -1559,7 +1488,6 @@
 
   app.addEventListener("submit", function (e) {
     if (e.target.id === "lead") { e.preventDefault(); submitLead(e.target); }
-    if (e.target.id === "mailf") { e.preventDefault(); submitMail(e.target); }
   });
 
   document.addEventListener("keydown", function (e) {
