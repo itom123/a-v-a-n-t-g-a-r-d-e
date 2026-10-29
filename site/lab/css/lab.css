@@ -58,7 +58,7 @@ body.lab { background: var(--paper); }
 .intro__title { margin: 0; font: var(--w-display) clamp(46px, 7.2vw, 112px)/.98 var(--f-display); letter-spacing: -.01em; }
 html[lang="zh-CN"] .intro__title { letter-spacing: .02em; line-height: 1.08; }
 /* Chinese display titles break only at punctuation, spaces or a \u200b in lab-content.js (你是哪一种/创作者？) */
-html[lang="zh-CN"] :is(.intro__title, .step-title, .r-h, .r-hero__title, .lead__t) { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
+html[lang="zh-CN"] :is(.intro__title, .step-title, .r-h, .r-hero__title, .lead__t, .intro__lead, .step--self .step-lead) { text-wrap: balance; word-break: keep-all; overflow-wrap: anywhere; }
 .intro__lead { margin: 0; font: 400 clamp(17px, 1.6vw, 21px)/1.6 var(--f-body); color: var(--ink); max-width: 34em; }
 .parts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
 .parts li { display: grid; gap: 4px; padding: 16px 16px 18px; background: rgba(244,245,243,.62); border-radius: 16px; backdrop-filter: blur(6px); }
@@ -78,6 +78,10 @@ html[lang="zh-CN"] :is(.intro__title, .step-title, .r-h, .r-hero__title, .lead__
   border-radius: 50%; background: var(--paper); font: 400 32px/1 var(--f-display);
   transform: rotate(calc(var(--i) * 72deg)) translateY(calc(min(440px, 80vw) / -2 + 8px)) rotate(calc(var(--i) * -72deg));
 }
+/* Ferris wheel: each character counter-spins against the ring so it always hangs upright, with a slight sway */
+.wheel__ring span b { display: block; font-weight: inherit; animation: spin 80s linear infinite reverse; }
+.wheel__ring span b i { display: block; font-style: normal; transform-origin: 50% -40%; animation: hang 6s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -1.3s); }
+@keyframes hang { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
 .wheel__mark { position: relative; z-index: 1; width: 44%; height: auto; color: var(--paper); fill: var(--paper); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -183,6 +187,8 @@ html[lang="zh-CN"] .step-title { line-height: 1.1; }
 .bi { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px; }
 .bi__s { margin: 0; font: 600 clamp(18px, 2.2vw, 24px)/1.4 var(--f-ui); }
 .bi__s--r { text-align: right; }
+.bi--one { grid-template-columns: minmax(0, 1fr); }
+.bi__s--one { text-align: center; text-wrap: balance; }
 .dots { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 10px; }
 .dot { border-radius: 50%; border: 2.5px solid var(--ink); background: transparent; cursor: pointer; flex: none; transition: transform .15s, background .15s; }
 .dot.s3 { width: 58px; height: 58px; }
@@ -455,7 +461,7 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
   .kv dd { margin-bottom: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fog i, .wheel__ring, .loading__mark { animation: none !important; }
+  .fog i, .wheel__ring, .wheel__ring span b, .wheel__ring span b i, .loading__mark { animation: none !important; }
   .loading__list li { opacity: 1; animation: none; }
 }
 
@@ -491,3 +497,48 @@ html[lang="en"] :is(.lab-foot span, .r-hero__dm, .parts span, .tz__row span, .bi
 
 /* Phones: the intro text runs down into the fog; keep the blobs light enough to read over. */
 @media (max-width: 640px) { .fog:not(.fog--dark) i:nth-child(1) { opacity: .28; } .fog:not(.fog--dark) i:nth-child(2) { opacity: .5; } .fog:not(.fog--dark) i:nth-child(3) { opacity: .45; } }
+
+/* ---------- self-reported MBTI ---------- */
+.selfbox { display: grid; gap: 22px; max-width: 760px; }
+.selfbox__code { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font: 400 clamp(48px, 9vw, 88px)/1 var(--f-display); letter-spacing: .04em; }
+.selfbox__code small { font-size: .45em; color: var(--mid); }
+.selfbox__code span { font: 600 18px/1.3 var(--f-ui); letter-spacing: 0; color: var(--ink-3); }
+.selfpair { clear: both; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.selfpair .seg button b { font-weight: 700; }
+.selfpair .seg { display: flex; flex-wrap: wrap; max-width: 100%; border-radius: 22px; }
+.step--self .step-lead, .step--quiz .step-lead { text-wrap: pretty; }
+@media (max-width: 520px) {
+  .step-nav:has(.step-nav__pair) { flex-wrap: wrap; gap: 10px; }
+  .step-nav__pair { flex-direction: column-reverse; width: 100%; }
+  .step-nav__pair button { width: 100%; justify-content: center; }
+}
+.seg--sm button { padding: 6px 11px; font-size: 13px; }
+.step-nav__pair { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+
+/* ---------- who you are, paths, email ---------- */
+.who { display: grid; gap: 12px; margin-bottom: 14px; }
+.mailf { scroll-margin-top: 130px; }
+.mailf .lead__msg { min-height: 1.4em; }
+.who p { margin: 0; }
+.who__signs { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 400 clamp(22px, 2.6vw, 30px)/1.2 var(--f-display); }
+.who__signs small { display: block; font: 500 12.5px/1.4 var(--f-ui); color: rgba(244,245,243,.7); letter-spacing: .04em; text-transform: uppercase; }
+.sign p { margin: 0; }
+.sign__k { font: 500 13px/1.4 var(--f-ui); color: var(--mid); }
+.sign__n { font: 400 clamp(26px, 3vw, 34px)/1.15 var(--f-display); margin: 6px 0 10px !important; }
+.sign__n span { margin-right: 8px; }
+.sign__n small { font: 500 15px var(--f-ui); color: var(--mid); }
+.r-lead { margin: -8px 0 22px; max-width: 46em; color: var(--ink-3); }
+.paths { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.paths li { display: grid; align-content: start; gap: 8px; }
+.paths h3 { margin: 0; font: 400 clamp(20px, 1.9vw, 24px)/1.2 var(--f-display); text-wrap: balance; }
+.paths p { margin: 0; text-wrap: pretty; }
+.paths__n { font: var(--w-display) 15px var(--f-display); opacity: .6; }
+.allies { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.allies li b { font: var(--w-display) 18px var(--f-display); }
+.allies li span { font-weight: 600; }
+.allies li small { display: block; color: var(--ink-3); font-size: 14px; margin-top: 2px; }
+.mailf { display: grid; gap: 14px; }
+.mailf .lead__t, .mailf p { margin: 0; }
+@media (max-width: 1000px) { .paths { grid-template-columns: minmax(0, 1fr); } }
+
+#who .r-note { margin-top: 14px; }

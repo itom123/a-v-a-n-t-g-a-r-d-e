@@ -71,7 +71,7 @@ ${sprite}
 
 (async () => {
   for (const pg of pages) { fs.mkdirSync(path.dirname(path.join(SITE, pg.file)), { recursive: true }); fs.writeFileSync(path.join(SITE, pg.file), shell(pg)); }
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+  const b = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}); const p = await b.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
   for (const pg of pages) {
     const file = path.join(SITE, pg.file);
     await p.goto('file://' + file + '?lang=zh', { waitUntil: 'load' }); await p.waitForTimeout(250);

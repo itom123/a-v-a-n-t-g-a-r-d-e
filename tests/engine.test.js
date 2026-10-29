@@ -7,7 +7,8 @@
  * 3. Time zones (historic DST, gaps, overlaps), equation of time, true solar time
  * 4. 农历 input with leap months
  * 5. Analysis sanity and strength distribution
- * 6. 16-type scoring and matching
+ * 6. 16-type scoring, the self-reported type, reading copy and matching
+ * 7. Star signs: Sun vs solar terms, Moon vs new moons, Rising geometry
  */
 "use strict";
 
@@ -225,40 +226,55 @@ test("strength levels are spread sensibly (no level above 60% of charts)", () =>
 });
 
 /* ---------------- 6. 16-type + matching ---------------- */
-const LABPATH = path.join(root, "js", "lab-content.js");
 global.window = {};
-require(LABPATH);
+require(path.join(root, "js", "lab-content.js"));
+require(path.join(root, "js", "lab-items.js"));
+require(path.join(root, "js", "lab-reading.js"));
 const LAB = global.window.LAB;
+const Astro = require(path.join(root, "js", "astro.js"));
+const TYPES = ["ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ"];
 
-test("item bank: 48 bipolar items, 12 per pair, 6 swapped per pair, 4 per facet", () => {
+test("item bank: 48 Likert items, 4 per facet keyed 2 + 2, 8 resilience, 4 validity, 6 pairs", () => {
   assert.strictEqual(LAB.items.length, 48);
-  ["EI", "SN", "TF", "JP"].forEach((d) => {
-    const its = LAB.items.filter((x) => x.d === d);
-    assert.strictEqual(its.length, 12, d);
-    assert.strictEqual(its.filter((x) => x.swap).length, 6, d + " swaps");
-  });
   const facets = {};
-  LAB.items.forEach((x) => { facets[x.f] = (facets[x.f] || 0) + 1; });
-  Object.keys(facets).forEach((f) => assert.strictEqual(facets[f], 4, f));
-  const ids = new Set(LAB.items.map((x) => x.id).concat(LAB.resilience.map((x) => x.id)));
-  assert.strictEqual(ids.size, 56, "unique ids");
+  LAB.items.forEach((x) => {
+    assert.ok(x.key === 1 || x.key === -1, x.id + " key");
+    assert.ok(x.t && x.t.zh && x.t.en, x.id + " text");
+    assert.ok(LAB.facets[x.f], x.id + " facet");
+    facets[x.f] = facets[x.f] || { d: x.d, plus: 0, minus: 0 };
+    assert.strictEqual(facets[x.f].d, x.d, x.f + " stays in one pair");
+    facets[x.f][x.key > 0 ? "plus" : "minus"]++;
+  });
+  assert.strictEqual(Object.keys(facets).length, 12);
+  Object.keys(facets).forEach((f) => assert.deepStrictEqual([facets[f].plus, facets[f].minus], [2, 2], f));
+  assert.strictEqual(LAB.resilience.length, 8);
+  assert.strictEqual(LAB.resilience.filter((x) => x.key > 0).length, 4);
+  assert.strictEqual(LAB.validity.length, 4);
+  LAB.validity.forEach((v) => assert.ok(v.kind === "instructed" ? v.want >= 1 && v.want <= 7 : v.kind === "infrequency", v.id));
+  const byId = {};
+  LAB.items.forEach((x) => { byId[x.id] = x; });
+  assert.strictEqual(LAB.consistencyPairs.length, 6);
+  LAB.consistencyPairs.forEach((p) => assert.ok(byId[p[0]] && byId[p[1]] && byId[p[0]].d === byId[p[1]].d, p.join("/")));
+  const ids = new Set(LAB.items.concat(LAB.resilience, LAB.validity).map((x) => x.id));
+  assert.strictEqual(ids.size, 60, "unique ids");
 });
 function answersFor(pref) {
-  // pref: e.g. "INFJ" → answer every item fully toward that letter
+  // pref: e.g. "INFJ" → strongly agree with every item pointing that way, strongly disagree otherwise
   const a = {};
   LAB.items.forEach((it) => {
     const wantFirst = pref.indexOf(it.d[0]) >= 0;
-    // left shows a (first letter) unless swapped
-    const leftIsFirst = !it.swap;
-    a[it.id] = wantFirst === leftIsFirst ? 1 : 7;
+    a[it.id] = (it.key > 0) === wantFirst ? 7 : 1;
   });
+  LAB.validity.forEach((v) => { a[v.id] = v.kind === "instructed" ? v.want : 1; });
   return a;
 }
-test("scoring recovers every one of the 16 types from consistent answers", () => {
-  ["ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ"].forEach((ty) => {
-    const r = T16.scoreType(LAB.items, answersFor(ty));
+const META = { validity: LAB.validity, pairs: LAB.consistencyPairs };
+test("scoring recovers every one of the 16 types from consistent answers, with high quality", () => {
+  TYPES.forEach((ty) => {
+    const r = T16.scoreType(LAB.items, answersFor(ty), META);
     assert.strictEqual(r.type, ty);
     Object.keys(r.dims).forEach((d) => assert.strictEqual(r.dims[d].band, "very-clear"));
+    assert.deepStrictEqual(r.qualityFlags, [], ty + " flags");
     assert.ok(LAB.types[ty], "description for " + ty);
   });
 });
@@ -269,12 +285,36 @@ test("all-neutral answers tie to INFP and are flagged", () => {
   assert.strictEqual(r.type, "INFP");
   assert.ok(r.qualityFlags.indexOf("neutral") >= 0);
 });
-test("always-left answers balance out and are flagged as position bias", () => {
+test("agreeing with everything cancels out and is flagged as acquiescence", () => {
   const a = {};
-  LAB.items.forEach((it) => { a[it.id] = 1; });
-  const r = T16.scoreType(LAB.items, a);
-  Object.keys(r.dims).forEach((d) => assert.strictEqual(r.dims[d].sum, 0));
-  assert.ok(r.qualityFlags.indexOf("position") >= 0 && r.qualityFlags.indexOf("straight") >= 0);
+  LAB.items.forEach((it) => { a[it.id] = it.id.length % 2 ? 6 : 7; }); // not perfectly straight
+  const r = T16.scoreType(LAB.items, a, META);
+  Object.keys(r.dims).forEach((d) => assert.ok(Math.abs(r.dims[d].pctFirst - 50) <= 10, d));
+  assert.ok(r.qualityFlags.indexOf("acquiescence") >= 0, r.qualityFlags.join());
+});
+test("failed attention items and contradictory pairs are flagged", () => {
+  const a = answersFor("ENTJ");
+  a.v1 = 1; // asked to choose Agree
+  a.v2 = 7; // agreed with an impossible statement
+  LAB.consistencyPairs.forEach((p) => { a[p[1]] = 8 - a[p[1]]; });
+  const r = T16.scoreType(LAB.items, a, META);
+  assert.ok(r.qualityFlags.indexOf("attention") >= 0);
+  assert.strictEqual(r.indices.attentionFailed, 2);
+  assert.ok(r.qualityFlags.indexOf("inconsistent") >= 0);
+  assert.strictEqual(r.quality, "low");
+});
+test("self-reported type: parse, stack, clarity from how sure", () => {
+  assert.deepStrictEqual(T16.parseCode("I'm an infj-t"), { type: "INFJ", at: "T" });
+  assert.deepStrictEqual(T16.parseCode("ENTP (A)"), { type: "ENTP", at: "A" });
+  assert.strictEqual(T16.parseCode("XYZW"), null);
+  const r = T16.fromSelfReport("INFJ-T", { EI: "clear", JP: "slight" }, "16p");
+  assert.strictEqual(r.type, "INFJ");
+  assert.strictEqual(r.temperament, "NF");
+  assert.deepStrictEqual(r.stack, ["Ni", "Fe", "Ti", "Se"]);
+  assert.strictEqual(r.dims.EI.letter, "I");
+  assert.ok(r.dims.EI.pctFirst < 20 && r.dims.JP.pctFirst > 50 && r.dims.JP.band === "slight");
+  assert.strictEqual(r.quality, "self");
+  assert.strictEqual(T16.scoreResilience(LAB.resilience, {}, "A").estimated, true);
 });
 test("function stacks", () => {
   assert.deepStrictEqual(T16.stack("INFJ"), ["Ni", "Fe", "Ti", "Se"]);
@@ -284,12 +324,32 @@ test("function stacks", () => {
 });
 test("resilience scale: best answers 100, worst 0", () => {
   const best = {}, worst = {};
-  LAB.resilience.forEach((it) => { best[it.id] = it.key > 0 ? 5 : 1; worst[it.id] = it.key > 0 ? 1 : 5; });
+  LAB.resilience.forEach((it) => { best[it.id] = it.key > 0 ? 7 : 1; worst[it.id] = it.key > 0 ? 1 : 7; });
   assert.strictEqual(T16.scoreResilience(LAB.resilience, best).pct, 100);
   assert.strictEqual(T16.scoreResilience(LAB.resilience, worst).pct, 0);
 });
 test("every archetype key (element × temperament) exists", () => {
   [0, 1, 2, 3, 4].forEach((e) => ["NF", "NT", "SJ", "SP"].forEach((t) => assert.ok(LAB.archetypes[e + t], e + t)));
+});
+test("reading copy: paths for all 16 types, 12 signs, every blend line in both languages", () => {
+  const both = (o, k) => assert.ok(o && o.zh && o.en, k);
+  TYPES.forEach((ty) => {
+    const c = LAB.careers[ty];
+    assert.strictEqual(c.paths.length, 3, ty);
+    c.paths.forEach((p, i) => { both(p.name, ty + i); both(p.d, ty + i); });
+    both(c.research, ty); both(c.habit, ty);
+    c.allies.forEach((a) => { assert.ok(LAB.types[a.type] && a.type !== ty, ty + " ally"); both(a.why, ty); });
+  });
+  assert.strictEqual(LAB.zodiac.length, 12);
+  LAB.zodiac.forEach((z, i) => {
+    assert.strictEqual(z.key, Astro.KEYS[i]);
+    assert.strictEqual(z.element, Astro.elementOf(i));
+    assert.strictEqual(z.modality, Astro.modalityOf(i));
+    ["name", "sun", "moon", "rising"].forEach((k) => both(z[k], z.key + k));
+  });
+  Astro.ELEMENT.forEach((e) => ["NF", "NT", "SJ", "SP"].forEach((t) => both(LAB.signTemperament[e][t], e + t)));
+  Astro.MODALITY.forEach((m) => ["J", "P"].forEach((j) => both(LAB.modalityJP[m][j], m + j)));
+  [0, 1, 2, 3, 4].forEach((w) => { both(LAB.elementFlavour[w], "flavour" + w); Astro.ELEMENT.forEach((e) => both(LAB.eastWest[w][e], w + e)); });
 });
 test("matching: level and subject filters, budget effect, conflict filter", () => {
   const type = T16.scoreType(LAB.items, answersFor("INFJ"));
@@ -306,6 +366,58 @@ test("matching: level and subject filters, budget effect, conflict filter", () =
   assert.strictEqual(Match.tutorsFor("critical", LAB.tutors, ids).length, 0, "tutor hidden when their schools are recommended");
   assert.strictEqual(Match.tutorsFor("critical", LAB.tutors, ["gsa"]).length, 1, "shown otherwise; disabled tutors stay hidden");
   ma.schools.forEach((r) => assert.ok(r.score >= 0 && r.score <= 100));
+});
+
+/* ---------------- 7. star signs ---------------- */
+const TERM_NAMES = ["冬至", "小寒", "大寒", "立春", "雨水", "惊蛰", "春分", "清明", "谷雨", "立夏", "小满", "芒种", "夏至", "小暑", "大暑", "立秋", "处暑", "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪"];
+function angle(a, b) { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); }
+test("Sun longitude hits every solar term 1950–2040 within 0.02° (立春 = 315°)", () => {
+  let worst = 0;
+  for (let y = 1950; y <= 2040; y++) {
+    const tb = lunar.Solar.fromYmd(y, 6, 1).getLunar().getJieQiTable();
+    Object.keys(tb).forEach((k) => {
+      const i = TERM_NAMES.indexOf(k);
+      if (i < 0) return;
+      worst = Math.max(worst, angle(Astro.sunLongitude(jieInstant(y, k)), (270 + 15 * i) % 360));
+    });
+  }
+  assert.ok(worst < 0.02, "worst " + worst);
+});
+test("Moon longitude: Meeus example 47.a and every lunar new moon 1950–2040", () => {
+  assert.ok(angle(Astro.moonLongitude(Date.UTC(1992, 3, 12) - 59000), 133.162655) < 0.02);
+  for (let y = 1950; y < 2040; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const s = lunar.Lunar.fromYmd(y, m, 1).getSolar();
+      const t0 = Date.UTC(s.getYear(), s.getMonth() - 1, s.getDay()) - 8 * 3600000;
+      const el = (t) => ((Astro.moonLongitude(t) - Astro.sunLongitude(t) + 540) % 360) - 180;
+      assert.ok(el(t0) <= 0.3 && el(t0 + 86400000) >= -0.3, "new moon on 初一 " + y + "-" + m);
+    }
+  }
+});
+test("Rising: the ascendant sits on the eastern horizon", () => {
+  let seed = 11;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 500; i++) {
+    const t = Date.UTC(1940, 0, 1) + rnd() * 3.4e12, lat = -64 + rnd() * 128, lon = -180 + rnd() * 360;
+    const asc = Astro.ascendant(t, lat, lon) * Math.PI / 180, e = Astro.obliquity(t) * Math.PI / 180;
+    const ra = Math.atan2(Math.sin(asc) * Math.cos(e), Math.cos(asc)), dec = Math.asin(Math.sin(e) * Math.sin(asc));
+    const H = Astro.lst(t, lon) * Math.PI / 180 - ra, p = lat * Math.PI / 180;
+    const alt = Math.asin(Math.sin(p) * Math.sin(dec) + Math.cos(p) * Math.cos(dec) * Math.cos(H));
+    assert.ok(Math.abs(alt) < 1e-6 && Math.sin(H) < 0, "lat " + lat);
+  }
+  assert.strictEqual(Astro.ascendant(Date.now(), 70, 20), null, "polar");
+});
+test("signs(): known date, unknown time and cusp handling", () => {
+  const c = chart({ year: 2000, month: 1, day: 1, hour: 12, minute: 0 });
+  const s = Astro.signs(c);
+  assert.strictEqual(Astro.KEYS[s.sun], "capricorn");
+  assert.ok(s.rising != null);
+  const n = Astro.signs(chart({ year: 2000, month: 1, day: 1, hour: null, minute: null }));
+  assert.strictEqual(n.rising, null);
+  assert.strictEqual(Astro.KEYS[n.sun], "capricorn");
+  // 2024 spring equinox: 2024-03-20 11:06 Beijing → cusp of Pisces/Aries
+  const eq = Astro.signs(chart({ year: 2024, month: 3, day: 20, hour: null, minute: null }));
+  assert.ok(eq.sunCusp);
 });
 
 process.stdout.write("\nStrength levels: " + JSON.stringify(levels) + "\nSpecial: " + JSON.stringify(specials) + "\n格局: " + JSON.stringify(geju) + "\n喜用 basis: " + JSON.stringify(why) + "\n");

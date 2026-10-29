@@ -1,0 +1,11 @@
+{
+  "name": "ag-lab-results",
+  "private": true,
+  "type": "module",
+  "description": "AG LAB results Worker: D1 storage + Cloudflare Email Service. Deployed with wrangler from the repo root's node_modules.",
+  "scripts": {
+    "test": "node selftest.js",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler d1 migrations apply ag-lab --remote && npx wrangler deploy"
+  }
+}

@@ -12,6 +12,10 @@
     "check:layout": "node _工具/check-layout.js site",
     "test": "node tests/engine.test.js",
     "test:server": "node server/lead-function/selftest.js",
+    "test:worker": "node workers/lab-results/selftest.js",
+    "dev:worker": "cd workers/lab-results && npx -y wrangler@4 dev",
+    "deploy:worker": "cd workers/lab-results && npx -y wrangler@4 d1 migrations apply ag-lab --remote && npx -y wrangler@4 deploy",
+    "lab:psychometrics": "node tools/lab-psychometrics.js",
     "deploy": "npm run build && npx -y wrangler@4 pages deploy site --project-name avantgarde-site --branch main",
     "deploy:london": "powershell -NoProfile -ExecutionPolicy Bypass -File server/ecs/deploy.ps1 -Server agstudio-us -Part site",
     "deploy:shanghai": "powershell -NoProfile -ExecutionPolicy Bypass -File server/ecs/deploy.ps1 -Server agstudio -Part site"

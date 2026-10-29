@@ -27,6 +27,9 @@ schema.json
 .claude/settings.local.json
 
 # Tool output
+.wrangler/
+# AG LAB answer exports for tools/lab-psychometrics.js: participant data, never commit
+lab-answers*.json
 test-results/
 playwright-report/
 

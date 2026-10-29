@@ -1,17 +1,17 @@
 /*!
  * AG LAB · page controller
- * Three steps (birth details → 56 questions → application profile), then the
- * report. Everything is computed in the browser; nothing leaves the page
- * unless the visitor submits the lead form.
+ * Three steps (birth details → 60 questions, or the visitor's own MBTI →
+ * application profile), then the report. Everything is computed in the
+ * browser; nothing leaves the page unless the visitor sends one of the forms.
  */
 (function () {
   "use strict";
 
   var L = window.LAB;
   var SITE = window.SITE || { meta: {} };
-  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard;
+  var Bazi = window.AGBazi, T16 = window.AGType16, Match = window.AGMatch, Card = window.AGCard, Astro = window.AGAstro;
   var app = document.getElementById("app");
-  var KEY = "ag-lab-v1";
+  var KEY = "ag-lab-v2"; // v2: Likert items and the self-reported type
   var U = L.ui;
   var XJ = { "Asia/Urumqi": 1, "Asia/Kashgar": 1 };
   var SEP = "\u00a0· "; // dot separator: a line may end with it but never start with it
@@ -103,6 +103,8 @@
         placeMode: "city", city: null, lat: "", lon: "", tzAuto: null, tz: null, tzManual: false, xjTime: false,
         solarTime: "true", ziRule: "23"
       },
+      mode: "test", // "test": full question bank; "self": the visitor enters their MBTI
+      self: { code: "", at: "", source: "16p", sure: { EI: "moderate", SN: "moderate", TF: "moderate", JP: "moderate" }, skippedRes: false },
       answers: {},
       qIndex: 0,
       quizStartedAt: null,
@@ -127,16 +129,26 @@
     persistTimer = setTimeout(function () { store.set(state); }, 150);
   }
 
-  var ITEMS = (function () {
-    var byDim = { EI: [], SN: [], TF: [], JP: [] };
-    L.items.forEach(function (it) { byDim[it.d].push(it); });
+  // Question order: the four pairs take turns, attention checks sit at fixed
+  // spread-out positions, and the resilience scale comes last.
+  var QUIZ = {};
+  var CHECK_AT = [11, 24, 37, 46];
+  function Q() {
+    var m = state.mode === "self" ? "self" : "test";
+    if (QUIZ[m]) return QUIZ[m];
     var out = [];
-    for (var i = 0; i < 12; i++) {
-      ["EI", "SN", "TF", "JP"].forEach(function (d) { if (byDim[d][i]) out.push({ kind: "bi", item: byDim[d][i] }); });
+    if (m === "test") {
+      var byDim = { EI: [], SN: [], TF: [], JP: [] };
+      L.items.forEach(function (it) { byDim[it.d].push(it); });
+      for (var i = 0; i < 12; i++) {
+        ["EI", "SN", "TF", "JP"].forEach(function (d) { if (byDim[d][i]) out.push({ kind: "type", item: byDim[d][i] }); });
+      }
+      (L.validity || []).forEach(function (it, k) { out.splice(Math.min(CHECK_AT[k] || out.length, out.length), 0, { kind: "check", item: it }); });
     }
-    L.resilience.forEach(function (it) { out.push({ kind: "likert", item: it }); });
-    return out;
-  })();
+    L.resilience.forEach(function (it) { out.push({ kind: "res", item: it }); });
+    return (QUIZ[m] = out);
+  }
+  function quizDone() { return Q().every(function (q) { return state.answers[q.item.id]; }); }
 
   /* ------------------------------------------------------------------ *
    * Calendar library
@@ -310,7 +322,7 @@
    * Shared bits of markup
    * ------------------------------------------------------------------ */
   function stepper(n) {
-    var names = [U.birthTitle, U.quizTitle, U.profileTitle];
+    var names = [U.birthTitle, state.mode === "self" ? U.selfTitle : U.quizTitle, U.profileTitle];
     return '<ol class="stepper" aria-label="Progress">' + names.map(function (nm, i) {
       var cls = i + 1 < n ? "done" : i + 1 === n ? "on" : "";
       return '<li class="' + cls + '"><b>0' + (i + 1) + "</b><span>" + T(nm) + "</span></li>";
@@ -354,13 +366,14 @@
           '<div class="intro__cta">' +
             (hasProgress
               ? '<button class="btn-main" data-act="resume">' + T(U.resume) + ' <i aria-hidden="true">→</i></button><button class="btn-ghost" data-act="restart">' + T(U.restart) + "</button>"
-              : '<button class="btn-main" data-act="start">' + T(U.start) + ' <i aria-hidden="true">→</i></button>') +
+              : '<button class="btn-main" data-act="start">' + T(U.start) + ' <i aria-hidden="true">→</i></button>' +
+                '<button class="btn-ghost" data-act="start-self">' + T(U.startSelf) + "</button>") +
           "</div>" +
           '<p class="promise"><span aria-hidden="true">●</span> ' + T(U.privacyPromise) + "</p>" +
         "</div>" +
         '<div class="wheel" aria-hidden="true">' +
           '<div class="wheel__ring">' + ["木", "火", "土", "金", "水"].map(function (c, i) {
-            return '<span style="--i:' + i + '">' + c + "</span>";
+            return '<span style="--i:' + i + '"><b><i>' + c + "</i></b></span>";
           }).join("") + "</div>" +
           markSprite("wheel__mark") +
         "</div>" +
@@ -605,64 +618,126 @@
    * ------------------------------------------------------------------ */
   var answerLock = false;
   function renderQuiz() {
-    var i = Math.min(state.qIndex, ITEMS.length - 1), q = ITEMS[i], total = ITEMS.length;
+    var items = Q(), i = Math.min(state.qIndex, items.length - 1), q = items[i], total = items.length;
     if (!state.quizStartedAt) state.quizStartedAt = Date.now();
-    var done = Object.keys(state.answers).length;
-    var sec = q.kind === "bi" ? U.sectionType : U.sectionRes;
-    var body;
-    if (q.kind === "bi") {
-      var it = q.item, left = it.swap ? it.b : it.a, right = it.swap ? it.a : it.b, cur = state.answers[it.id];
-      body = '<div class="bi">' +
-        '<p class="bi__s bi__s--l" id="bi-l">' + T(left) + "</p>" +
-        '<p class="bi__s bi__s--r" id="bi-r">' + T(right) + "</p>" +
-        '<div class="dots" role="radiogroup" aria-labelledby="bi-l bi-r">' + range(1, 7).map(function (v) {
-          var size = [3, 2, 1, 0, 1, 2, 3][v - 1];
-          var lbl = v < 4 ? tr(U.moreLeft) : v > 4 ? tr(U.moreRight) : tr(U.neutral);
-          return '<button type="button" role="radio" aria-checked="' + (cur === v) + '" aria-label="' + esc(lbl) + " " + v +
-            '" class="dot s' + size + (v < 4 ? " l" : v > 4 ? " r" : " m") + (cur === v ? " on" : "") + '" data-act="answer" data-v="' + v + '"></button>';
-        }).join("") + "</div>" +
-        '<div class="dots__lbl"><span>' + T(U.moreLeft) + "</span><span>" + T(U.neutral) + "</span><span>" + T(U.moreRight) + "</span></div>" +
-        "</div>";
-    } else {
-      var r = q.item, cr = state.answers[r.id];
-      body = '<div class="lk"><p class="lk__s" id="lk-s">' + T(r.t) + '</p><div class="lk__opts" role="radiogroup" aria-labelledby="lk-s">' +
-        U.likert.map(function (o, k) {
-          return '<button type="button" role="radio" aria-checked="' + (cr === k + 1) + '" class="lk__o' + (cr === k + 1 ? " on" : "") + '" data-act="answer" data-v="' + (k + 1) + '">' + T(o) + "</button>";
-        }).join("") + "</div></div>";
-    }
+    var done = items.filter(function (x) { return state.answers[x.item.id]; }).length;
+    var sec = q.kind === "res" ? U.sectionRes : U.sectionType;
+    var it = q.item, cur = state.answers[it.id];
+    var body = '<div class="bi bi--one">' +
+      '<p class="bi__s bi__s--one" id="lk-s">' + T(it.t) + "</p>" +
+      '<div class="dots" role="radiogroup" aria-labelledby="lk-s">' + range(1, 7).map(function (v) {
+        var size = [3, 2, 1, 0, 1, 2, 3][v - 1];
+        return '<button type="button" role="radio" aria-checked="' + (cur === v) + '" aria-label="' + T(U.scale7[v - 1]) +
+          '" title="' + T(U.scale7[v - 1]) + '" class="dot s' + size + (v < 4 ? " l" : v > 4 ? " r" : " m") + (cur === v ? " on" : "") + '" data-act="answer" data-v="' + v + '"></button>';
+      }).join("") + "</div>" +
+      '<div class="dots__lbl"><span>' + T(U.disagree) + "</span><span>" + T(U.scale7[3]) + "</span><span>" + T(U.agree) + "</span></div>" +
+      "</div>";
+    var self = state.mode === "self";
     app.innerHTML =
       '<section class="step step--quiz">' + stepper(2) +
-        '<header class="step-head"><h1 class="step-title">' + T(U.quizTitle) + '</h1><p class="step-lead">' + T(U.quizLead) + "</p></header>" +
+        '<header class="step-head"><h1 class="step-title">' + T(self ? U.sectionRes : U.quizTitle) + '</h1><p class="step-lead">' + T(self ? U.resLead : U.quizLead) + "</p></header>" +
         '<div class="qbar"><span class="qbar__sec">' + T(sec) + '</span><span class="qbar__n">' + T(U.qOf, { n: i + 1, total: total }) + "</span>" +
         '<div class="qbar__track"><i style="width:' + Math.round(done / total * 100) + '%"></i></div></div>' +
         '<div class="qcard" data-kind="' + q.kind + '">' + body + "</div>" +
         '<div class="step-nav"><button class="btn-ghost" data-act="quiz-prev">← ' + T(U.prev) + "</button>" +
-        (state.answers[q.item.id] ? '<button class="btn-main" data-act="quiz-next">' + T(U.next) + ' <i aria-hidden="true">→</i></button>' : "<span></span>") +
+        (self ? '<span class="step-nav__pair"><button class="btn-ghost" data-act="self-skip">' + T(U.selfSkip) + "</button>" : "") +
+        (state.answers[it.id] ? '<button class="btn-main" data-act="quiz-next">' + T(U.next) + ' <i aria-hidden="true">→</i></button>' : self ? "" : "<span></span>") +
+        (self ? "</span>" : "") +
         "</div>" +
       "</section>";
     answerLock = false;
   }
 
+  /* ------------------------------------------------------------------ *
+   * Step 2 (alternative) · the visitor's own MBTI
+   * ------------------------------------------------------------------ */
+  var PAIRS = [["EI", "E", "I"], ["SN", "S", "N"], ["TF", "T", "F"], ["JP", "J", "P"]];
+  function selfCode() {
+    var c = state.self.code || "";
+    return /^[EI][SN][TF][JP]$/.test(c) ? c : null;
+  }
+  function renderSelf() {
+    var sf = state.self, code = sf.code || "____";
+    var pairs = PAIRS.map(function (p, i) {
+      var cur = code[i] === p[1] || code[i] === p[2] ? code[i] : null;
+      return '<div class="selfpair"><div class="seg" role="radiogroup" aria-label="' + p[1] + "/" + p[2] + '">' + [p[1], p[2]].map(function (l) {
+          return '<button type="button" role="radio" aria-checked="' + (cur === l) + '" class="' + (cur === l ? "on" : "") + '" data-act="self-letter" data-i="' + i + '" data-v="' + l + '"><b>' + l + "</b> " + T(L.letters[l]) + "</button>";
+        }).join("") + "</div>" +
+        '<div class="seg seg--sm" role="radiogroup" aria-label="' + T(U.selfSure) + '">' + ["slight", "moderate", "clear"].map(function (k) {
+          var on = sf.sure[p[0]] === k;
+          return '<button type="button" role="radio" aria-checked="' + on + '" class="' + (on ? "on" : "") + '" data-act="self-sure" data-d="' + p[0] + '" data-v="' + k + '">' + T(U.sureOpts[k]) + "</button>";
+        }).join("") + "</div></div>";
+    }).join("");
+    var ready = !!selfCode();
+    app.innerHTML =
+      '<section class="step step--self">' + stepper(2) +
+        '<header class="step-head"><h1 class="step-title">' + T(U.selfTitle) + '</h1><p class="step-lead">' + T(U.selfLead) + "</p></header>" +
+        '<div class="selfbox">' +
+          '<label class="inp inp--wide"><span>' + T(U.selfPaste) + '</span><input id="self-paste" autocomplete="off" spellcheck="false" placeholder="INFJ-T" value="' + esc(ready ? sf.code + (sf.at ? "-" + sf.at : "") : "") + '"></label>' +
+          '<p class="selfbox__code" aria-live="polite">' + esc(code.replace(/_/g, "·")) + (sf.at ? "<small>-" + esc(sf.at) + "</small>" : "") +
+            (ready && L.types[sf.code] ? "<span>" + T(L.types[sf.code].name) + "</span>" : "") + "</p>" +
+          '<fieldset class="prof__q"><legend>' + T(U.selfPairs) + " <small>" + T(U.selfSure) + "</small></legend>" + pairs + "</fieldset>" +
+          '<fieldset class="prof__q"><legend>' + T(U.selfAT) + '</legend><div class="chips">' + U.atOpts.map(function (o) {
+            var on = (sf.at || "") === o.v;
+            return '<button type="button" class="chip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="self-at" data-v="' + o.v + '">' + T(o) + "</button>";
+          }).join("") + "</div></fieldset>" +
+          '<fieldset class="prof__q"><legend>' + T(U.selfSource) + '</legend><div class="chips">' + U.sourceOpts.map(function (o) {
+            var on = sf.source === o.v;
+            return '<button type="button" class="chip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="self-source" data-v="' + o.v + '">' + T(o) + "</button>";
+          }).join("") + "</div></fieldset>" +
+        "</div>" +
+        '<div class="step-nav"><button class="btn-ghost" data-act="to-birth">← ' + T(U.prev) + "</button>" +
+          '<span class="step-nav__pair"><button class="btn-ghost" data-act="self-skip"' + (ready ? "" : " disabled") + ">" + T(U.selfSkip) + "</button>" +
+          '<button class="btn-main" data-act="self-next"' + (ready ? "" : " disabled") + ">" + T(U.selfNext) + ' <i aria-hidden="true">→</i></button></span></div>' +
+      "</section>";
+  }
+  function setSelfLetter(i, l) {
+    var c = (state.self.code || "____").split("");
+    while (c.length < 4) c.push("_");
+    c[i] = l;
+    state.self.code = c.join("");
+    persist();
+    renderSelf();
+  }
+
   function answer(v) {
     if (answerLock) return;
-    var q = ITEMS[state.qIndex];
+    var q = Q()[state.qIndex];
     state.answers[q.item.id] = v;
     answerLock = true;
     persist();
     $$(".qcard [data-act=answer]").forEach(function (b) { b.classList.toggle("on", +b.getAttribute("data-v") === v); });
-    setTimeout(quizNext, 170);
+    setTimeout(afterAnswer, 170);
+  }
+
+  // After an answer: the next unanswered question (looking ahead first), or finish
+  function afterAnswer() {
+    var items = Q(), i = state.qIndex;
+    var ahead = items.findIndex(function (q, k) { return k > i && !state.answers[q.item.id]; });
+    if (ahead < 0) ahead = items.findIndex(function (q) { return !state.answers[q.item.id]; });
+    if (ahead < 0) { finishQuiz(); return; }
+    if (ahead === i + 1) { quizNext(); return; }
+    state.qIndex = ahead;
+    persist();
+    renderQuiz();
   }
 
   function quizNext() {
-    if (state.qIndex < ITEMS.length - 1) {
+    var items = Q();
+    if (state.qIndex < items.length - 1) {
       state.qIndex++;
       persist();
       renderQuiz();
       return;
     }
-    var firstMissing = ITEMS.findIndex(function (q) { return !state.answers[q.item.id]; });
+    var firstMissing = items.findIndex(function (q) { return !state.answers[q.item.id]; });
     if (firstMissing >= 0) { state.qIndex = firstMissing; renderQuiz(); return; }
+    finishQuiz();
+  }
+
+  function finishQuiz() {
     state.quizMs = Date.now() - (state.quizStartedAt || Date.now());
+    state.self.skippedRes = false;
     go("profile");
   }
 
@@ -696,7 +771,7 @@
               return '<button type="button" class="chip' + (on ? " on" : "") + '" aria-pressed="' + on + '" data-act="prof" data-q="' + q.key + '" data-v="' + esc(o.v) + '">' + T(o) + "</button>";
             }).join("") + "</div></fieldset>";
         }).join("") + "</div>" +
-        '<div class="step-nav"><button class="btn-ghost" data-act="to-quiz">← ' + T(U.prev) + "</button>" +
+        '<div class="step-nav"><button class="btn-ghost" data-act="' + (state.mode === "self" && state.self.skippedRes ? "to-self" : "to-quiz") + '">← ' + T(U.prev) + "</button>" +
         '<button class="btn-main" data-act="see-result"' + (profileDone() ? "" : " disabled") + ">" + T(U.seeResult) + ' <i aria-hidden="true">→</i></button></div>' +
       "</section>";
   }
@@ -725,12 +800,16 @@
    * ------------------------------------------------------------------ */
   function computeAll() {
     var chart = Bazi.compute(birthInput());
-    var type = T16.scoreType(L.items, state.answers, { durationMs: state.quizMs });
-    var res = T16.scoreResilience(L.resilience, state.answers);
+    var type = state.mode === "self"
+      ? T16.fromSelfReport(state.self.code + (state.self.at ? "-" + state.self.at : ""), state.self.sure, state.self.source)
+      : T16.scoreType(L.items, state.answers, { durationMs: state.quizMs, validity: L.validity, pairs: L.consistencyPairs });
+    if (!type) throw new Error("no type");
+    var res = T16.scoreResilience(L.resilience, state.answers, type.at);
+    var astro = Astro ? safe(function () { return Astro.signs(chart); }, null) : null;
     var match = Match.run(state.profile, { type: type, resilience: res, chart: chart }, { schools: L.schools });
     var topIds = match.schools.slice(0, 5).map(function (r) { return r.school.id; });
     return {
-      chart: chart, type: type, res: res, match: match,
+      chart: chart, type: type, res: res, match: match, astro: astro,
       archetype: L.archetypes[chart.dayMaster.wx + type.temperament],
       topMode: chart.modes.order[0],
       tutors: Match.tutorsFor(match.mentors[0].key, L.tutors, topIds)
@@ -781,19 +860,116 @@
             '<p class="kicker kicker--light">' + T(U.yourPersona) + "</p>" +
             '<h1 class="r-hero__title">' + T(a) + "</h1>" +
             '<p class="r-hero__en">' + esc(state.lang === "zh" ? a.en : a.zh) + "</p>" +
-            '<p class="r-hero__tags"><span>' + esc(tr(L.wx[el])) + "</span><span>" + ty.type + "</span><span>" + T(mode) + (state.lang === "zh" ? "型" : "") + "</span></p>" +
+            '<p class="r-hero__tags"><span>' + esc(tr(L.wx[el])) + "</span><span>" + ty.type + "</span>" +
+              (c.astro ? "<span>" + esc(signName(c.astro.sun)) + "</span>" : "") +
+              "<span>" + T(mode) + (state.lang === "zh" ? "型" : "") + "</span></p>" +
             '<p class="r-hero__d">' + T(a.d) + " " + T(tinfo.line) + "</p>" +
             '<p class="r-hero__dm">' + T(U.dayMaster) + SEP + "<b>" + ch.dayMaster.zh + Bazi.WX[el] + "</b>" + SEP + T(dmInfo.img) + " — " + T(dmInfo.d) + "</p>" +
             '<div class="r-hero__cta"><button class="btn-main btn-main--light" data-act="save-card">' + T(U.saveCard) + '</button>' +
+            '<a class="btn-ghost btn-ghost--light" href="#mail">' + T(U.mail.title) + "</a>" +
             '<button class="btn-ghost btn-ghost--light" data-act="copy-link">' + T(U.copyLink) + "</button></div>" +
           "</div>" +
           '<figure class="r-hero__card"><canvas id="card" width="1080" height="1440" aria-label="' + T(U.saveCard) + '"></canvas></figure>' +
         "</header>" +
-        '<nav class="r-tabs" aria-label="Sections">' + U.tabs.map(function (tb) { return '<a href="#' + tb.id + '">' + T(tb) + "</a>"; }).join("") + "</nav>" +
-        sectionWuxing() + sectionChart() + sectionType() + sectionMatch() + sectionMethod() +
+        '<nav class="r-tabs" aria-label="Sections">' + U.tabs.filter(function (tb) {
+          return !(tb.id === "who" && !(c.astro && L.zodiac)) && !(tb.id === "paths" && !(L.careers && L.careers[ty.type]));
+        }).map(function (tb) { return '<a href="#' + tb.id + '">' + T(tb) + "</a>"; }).join("") + "</nav>" +
+        sectionWho() + sectionWuxing() + sectionChart() + sectionType() + sectionPaths() + sectionMatch() + sectionMail() + sectionMethod() +
       "</article>";
 
     drawCard();
+    mountTurnstile();
+  }
+
+  function tab(id) { return U.tabs.filter(function (t) { return t.id === id; })[0]; }
+  function signName(i) { var z = L.zodiac && L.zodiac[i]; return z ? tr(z.name) : ""; }
+  function signGlyph(i) { var z = L.zodiac && L.zodiac[i]; return z ? z.glyph : ""; }
+
+  function sectionWho() {
+    var a = current.astro, ty = current.type, W = U.who;
+    if (!a || !L.zodiac) return "";
+    var sun = L.zodiac[a.sun], moon = L.zodiac[a.moon];
+    var el = Astro.elementOf(a.sun), mod = Astro.modalityOf(a.sun);
+    function sign(role, idx, alt, roleLine, text) {
+      var z = L.zodiac[idx];
+      return '<div class="r-card sign"><p class="sign__k">' + T(role) + SEP + T(roleLine) + "</p>" +
+        '<p class="sign__n"><span aria-hidden="true">' + z.glyph + "</span>" + T(z.name) +
+        (alt != null ? " <small>" + T(W.or) + " " + T(L.zodiac[alt].name) + "</small>" : "") + "</p>" +
+        "<p>" + T(text) + (alt != null ? " " + T(L.zodiac[alt][role === W.moon ? "moon" : "sun"]) : "") + "</p></div>";
+    }
+    var notes = [];
+    if (a.sunCusp) notes.push(T(W.cusp));
+    if (current.chart.input.hour == null) notes.push(T(W.noTime));
+    else if (a.rising == null) notes.push(T(W.polar));
+    var rising = a.rising != null
+      ? sign(W.rising, a.rising, null, W.risingRole, L.zodiac[a.rising].rising)
+      : "";
+    return '<section class="r-sec" id="who"><div class="r-wrap">' +
+      '<h2 class="r-h">' + T(tab("who")) + "</h2>" +
+      '<div class="r-card r-card--dark r-card--wide who">' +
+        '<p class="who__signs">' + [[W.sun, a.sun], [W.moon, a.moon], [W.rising, a.rising]].filter(function (x) { return x[1] != null; }).map(function (x) {
+          return "<span><small>" + T(x[0]) + "</small> " + signGlyph(x[1]) + " " + esc(signName(x[1])) + "</span>";
+        }).join("") + "<span><small>MBTI</small> " + ty.type + "</span></p>" +
+        "<p><b>" + T(W.blend) + "</b>" + SEP + T(L.signTemperament[el][ty.temperament]) + "</p>" +
+        "<p><b>" + T(W.rhythm) + "</b>" + SEP + T(L.modalityJP[mod][ty.type[3]]) + "</p>" +
+        "<p><b>" + T(W.eastWest) + "</b>" + SEP + T(L.eastWest[current.chart.dayMaster.wx][el]) + "</p>" +
+      "</div>" +
+      '<div class="r-grid r-grid--3">' +
+        sign(W.sun, a.sun, null, W.sunRole, sun.sun) +
+        sign(W.moon, a.moon, a.moonAlt, W.moonRole, moon.moon) +
+        rising +
+      "</div>" +
+      (notes.length ? '<p class="r-note">' + notes.join(" ") + "</p>" : "") +
+      '<p class="r-note">' + T(W.note) + "</p>" +
+      "</div></section>";
+  }
+
+  function sectionPaths() {
+    var ty = current.type, c = L.careers && L.careers[ty.type], P = U.paths;
+    if (!c) return "";
+    return '<section class="r-sec r-sec--grey" id="paths"><div class="r-wrap">' +
+      '<h2 class="r-h">' + T(P.title) + "</h2>" +
+      '<p class="r-lead">' + T(P.lead) + "</p>" +
+      '<ol class="paths">' + c.paths.map(function (p, i) {
+        return '<li class="r-card' + (i === 0 ? " r-card--dark" : "") + '"><b class="paths__n">0' + (i + 1) + "</b><h3>" + T(p.name) + "</h3><p>" + T(p.d) + "</p></li>";
+      }).join("") + "</ol>" +
+      '<div class="r-grid">' +
+        '<div class="r-card"><h3 class="r-h3">' + T(P.research) + "</h3><p>" + T(c.research) + "</p>" +
+          '<p class="r-note"><b>' + T(P.element) + "</b>" + SEP + T(L.elementFlavour[current.chart.dayMaster.wx]) + "</p></div>" +
+        '<div class="r-card"><h3 class="r-h3">' + T(P.allies) + '</h3><ul class="allies">' + c.allies.map(function (al) {
+          return "<li><b>" + al.type + "</b> <span>" + T(L.types[al.type] ? L.types[al.type].name : "") + "</span><small>" + T(al.why) + "</small></li>";
+        }).join("") + "</ul></div>" +
+        '<div class="r-card"><h3 class="r-h3">' + T(P.habit) + "</h3><p>" + T(c.habit) + "</p></div>" +
+      "</div></div></section>";
+  }
+
+  function sectionMail() {
+    var M = U.mail;
+    return '<section class="r-sec" id="mail"><div class="r-wrap r-wrap--narrow">' +
+      '<form class="mailf r-card" id="mailf" novalidate>' +
+        '<h3 class="lead__t">' + T(M.title) + "</h3><p>" + T(M.lead) + "</p>" +
+        '<label class="inp"><span>' + T(M.email) + '</span><input name="email" type="email" autocomplete="email" required maxlength="120"></label>' +
+        '<input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+        '<label class="check"><input type="checkbox" name="cStore"><span>' + T(M.cStore) + "</span></label>" +
+        '<label class="check"><input type="checkbox" name="cAge"><span>' + T(M.cAge) + "</span></label>" +
+        (state.mode === "test" ? '<label class="check"><input type="checkbox" name="cResearch"><span>' + T(M.cResearch) + "</span></label>" : "") +
+        '<label class="check"><input type="checkbox" name="cContact"><span>' + T(M.cContact) + "</span></label>" +
+        '<p class="hint"><a href="privacy.html" target="_blank" rel="noopener">' + T(U.privacyLink) + "</a></p>" +
+        (L.meta.turnstileSiteKey ? '<div class="ts" id="ts-mail"></div>' : "") +
+        '<button class="btn-main" type="submit">' + T(M.send) + ' <i aria-hidden="true">→</i></button>' +
+        '<p class="lead__msg" id="mail-msg" role="status"></p>' +
+      "</form></div></section>";
+  }
+
+  /* Cloudflare Turnstile: loaded only when a site key is configured */
+  var tsLoading = null;
+  function mountTurnstile() {
+    var key = L.meta.turnstileSiteKey, el = $("#ts-mail");
+    if (!key || !el) return;
+    if (!tsLoading) tsLoading = loadScript("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit");
+    tsLoading.then(function () {
+      if (window.turnstile && el.isConnected && !el.childElementCount) window.turnstile.render(el, { sitekey: key, theme: "light", language: state.lang === "zh" ? "zh-cn" : "en" });
+    }).catch(function () { /* the Worker reports the missing token */ });
   }
 
   function sectionWuxing() {
@@ -806,7 +982,7 @@
     var modes = current.chart.modes;
     var ls = current.match.learningStyle;
     return '<section class="r-sec" id="wuxing"><div class="r-wrap">' +
-      '<h2 class="r-h">' + T(U.tabs[0]) + "</h2>" +
+      '<h2 class="r-h">' + T(tab("wuxing")) + "</h2>" +
       '<div class="r-grid">' +
         '<div class="r-card r-card--dark dm">' +
           '<span class="dm__char">' + ch.dayMaster.zh + "</span>" +
@@ -872,7 +1048,7 @@
     var rel = ch.relations;
     var flags = ch.flags;
     return '<section class="r-sec r-sec--grey" id="chart"><div class="r-wrap">' +
-      '<h2 class="r-h">' + T(U.tabs[1]) + "</h2>" +
+      '<h2 class="r-h">' + T(tab("chart")) + "</h2>" +
       '<div class="r-card r-card--flush">' + table + "</div>" +
       '<div class="r-grid">' +
         '<div class="r-card"><h3 class="r-h3">' + T(U.timeTitle) + '</h3><dl class="kv">' +
@@ -903,10 +1079,11 @@
     var ty = current.type, info = L.types[ty.type], res = current.res;
     var dims = [["EI", "E", "I"], ["SN", "S", "N"], ["TF", "T", "F"], ["JP", "J", "P"]];
     return '<section class="r-sec" id="type"><div class="r-wrap">' +
-      '<h2 class="r-h">' + T(U.tabs[2]) + "</h2>" +
+      '<h2 class="r-h">' + T(tab("type")) + "</h2>" +
       '<div class="r-grid">' +
         '<div class="r-card r-card--dark tcode"><p class="tcode__code">' + ty.type + '</p><p class="tcode__name">' + T(info.name) + "</p><p>" + T(info.line) + "</p></div>" +
         '<div class="r-card"><h3 class="r-h3">' + T(U.typeTitle) + "</h3>" +
+          (ty.self ? '<p class="r-note"><b>' + T(U.selfReported) + "</b>" + SEP + T(U.selfReportedNote) + "</p>" : "") +
           dims.map(function (d) {
             var x = ty.dims[d[0]], first = x.pctFirst, win = x.letter;
             return '<div class="dim"><span class="dim__a' + (win === d[1] ? " on" : "") + '">' + d[1] + " <small>" + T(L.letters[d[1]]) + " " + first + "%</small></span>" +
@@ -923,8 +1100,9 @@
         '<div class="r-card"><dl class="kv kv--stack"><dt>' + T(U.strengths) + "</dt><dd>" + T(info.strengths) + "</dd><dt>" + T(U.edge) + "</dt><dd>" + T(info.edge) + "</dd><dt>" + T(U.env) + "</dt><dd>" + T(info.env) + "</dd></dl></div>" +
         '<div class="r-card"><h3 class="r-h3">' + T(U.resilience) + "</h3>" + bar("", res.pct, 100, res.pct + "/100") +
           '<p class="r-note">' + T(U.resBands[res.band]) + "</p>" +
-          '<p class="r-note"><b>' + T(U.quality) + SEP + T(U.qualityLevels[ty.quality]) + "</b>" +
-          ty.qualityFlags.map(function (f) { return "<br>· " + T(U.qualityFlags[f]); }).join("") + "</p></div>" +
+          (res.estimated ? '<p class="r-note">' + T(U.resEstimated) + "</p>" : "") +
+          (ty.self ? "" : '<p class="r-note"><b>' + T(U.quality) + SEP + T(U.qualityLevels[ty.quality]) + "</b>" +
+          ty.qualityFlags.map(function (f) { return "<br>· " + T(U.qualityFlags[f]); }).join("") + "</p>") + "</div>" +
       "</div></div></section>";
   }
 
@@ -1012,9 +1190,9 @@
     function list(a) { return "<ul>" + a.map(function (x) { return "<li>" + T(x) + "</li>"; }).join("") + "</ul>"; }
     return '<section class="r-sec r-sec--grey" id="method"><div class="r-wrap r-wrap--narrow">' +
       '<details class="method"><summary>' + T(U.methodTitle) + "</summary>" +
-        "<h4>" + T(U.tabs[1]) + "</h4>" + list(L.method.bazi) +
-        "<h4>" + T(U.tabs[2]) + "</h4>" + list(L.method.type) +
-        "<h4>" + T(U.tabs[3]) + "</h4>" + list(L.method.match) +
+        "<h4>" + T(tab("chart")) + "</h4>" + list(L.method.bazi) +
+        "<h4>" + T(tab("type")) + "</h4>" + list(L.method.type) +
+        "<h4>" + T(tab("match")) + "</h4>" + list(L.method.match) +
       "</details>" +
       '<p class="disclaimer">' + T(U.disclaimer) + "</p>" +
       '<div class="r-end"><button class="btn-ghost" data-act="retake">' + T(U.retake) + "</button></div>" +
@@ -1035,6 +1213,9 @@
       type: c.type.type,
       typeName: L.types[c.type.type].name,
       mode: L.modes[c.topMode],
+      signs: c.astro && L.zodiac ? [["sun", c.astro.sun], ["moon", c.astro.moon], ["rising", c.astro.rising]].filter(function (x) { return x[1] != null; }).map(function (x) {
+        return { role: U.who[x[0]], name: L.zodiac[x[1]].name };
+      }) : [],
       pillars: ["year", "month", "day", "hour"].map(function (pos) {
         var p = ch.pillars.filter(function (x) { return x.pos === pos; })[0];
         return p ? { gan: p.ganZh, zhi: p.zhiZh } : null;
@@ -1091,6 +1272,69 @@
     }
   }
 
+  /* ---------- result summary sent by both forms (keys only; the Worker writes the email) ---------- */
+  function resultSummary() {
+    var c = current, ch = c.chart, a = c.astro;
+    return {
+      mode: state.mode,
+      archetype: ch.dayMaster.wx + c.type.temperament,
+      element: ch.dayMaster.wx,
+      dayMaster: ch.dayMaster.gan,
+      type: c.type.type,
+      at: c.type.at || null,
+      source: c.type.self ? c.type.source : null,
+      dims: Object.keys(c.type.dims).reduce(function (o, k) { o[k] = c.type.dims[k].pctFirst; return o; }, {}),
+      quality: c.type.quality,
+      flags: c.type.qualityFlags,
+      resilience: c.res.pct,
+      mode5: c.topMode,
+      sun: a ? a.sun : null, moon: a ? a.moon : null, moonAlt: a ? a.moonAlt : null, rising: a ? a.rising : null,
+      mentor: c.match.mentors[0].key,
+      countries: c.match.countries.map(function (x) { return x.country + ":" + x.score; }),
+      schools: c.match.schools.slice(0, 5).map(function (r) { return r.school.id + ":" + r.score; })
+    };
+  }
+
+  function answerList() {
+    return Q().map(function (q) { return [q.item.id, state.answers[q.item.id] || 0]; });
+  }
+
+  function submitMail(form) {
+    var fd = new FormData(form), msg = $("#mail-msg"), M = U.mail;
+    var email = String(fd.get("email") || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || !fd.get("cStore") || !fd.get("cAge")) { msg.textContent = tr(M.err); return; }
+    var research = !!fd.get("cResearch") && state.mode === "test";
+    var payload = {
+      campaign: L.meta.campaign, version: L.meta.version, lang: state.lang,
+      hp: String(fd.get("website") || ""),
+      email: email.slice(0, 120),
+      consent: { store: true, age: true, research: research, contact: !!fd.get("cContact") },
+      turnstile: String(fd.get("cf-turnstile-response") || ""),
+      source: state.src || {},
+      profile: state.profile,
+      quizMs: state.quizMs || 0,
+      result: resultSummary(),
+      answers: research ? answerList() : null
+    };
+    var btn = form.querySelector("button[type=submit]");
+    if (!L.meta.resultsEndpoint) { msg.textContent = tr(M.fail); return; }
+    btn.disabled = true;
+    msg.textContent = tr(U.sending);
+    fetch(L.meta.resultsEndpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then(function (r) {
+        if (r.status === 429) throw new Error("limited");
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        msg.textContent = tr(M.sent);
+        state.mailed = true;
+        persist();
+      })
+      .catch(function (e) {
+        btn.disabled = false;
+        msg.textContent = tr(e && e.message === "limited" ? M.limited : M.fail);
+        if (window.turnstile) { try { window.turnstile.reset(); } catch (x) { /* ignore */ } }
+      });
+  }
+
   /* ---------- lead ---------- */
   function leadPayload(form) {
     var fd = new FormData(form), c = current, ch = c.chart;
@@ -1113,6 +1357,7 @@
       },
       consent: { privacy: !!fd.get("cPrivacy"), crossBorder: !!fd.get("cCross"), guardian: !!fd.get("cGuardian"), chart: includeChart },
       profile: state.profile,
+      summary: resultSummary(),
       result: {
         archetype: c.archetype.zh + " / " + c.archetype.en,
         element: L.wx[ch.dayMaster.wx].zh,
@@ -1194,6 +1439,7 @@
     renderChrome();
     if (state.step === "birth") renderBirth();
     else if (state.step === "quiz") renderQuiz();
+    else if (state.step === "self") renderSelf();
     else if (state.step === "profile") renderProfile();
     else if (state.step === "loading") renderLoading();
     else if (state.step === "result") renderResult();
@@ -1220,8 +1466,13 @@
       if (name === "placeMode") { state.birth.placeMode = v; state.tzEditing = false; renderPlace(); renderPreview(); persist(); return; }
     }
     switch (act) {
-      case "start": state.startedAt = Date.now(); go("birth"); break;
-      case "resume": go(Object.keys(state.answers).length >= ITEMS.length ? "profile" : (state.birth.year && birthReady() ? (Object.keys(state.answers).length ? "quiz" : "birth") : "birth")); break;
+      case "start": state.mode = "test"; state.startedAt = Date.now(); go("birth"); break;
+      case "start-self": state.mode = "self"; state.startedAt = Date.now(); go("birth"); break;
+      case "resume":
+        if (!(state.birth.year && birthReady())) go("birth");
+        else if (state.mode === "self") go(selfCode() && (quizDone() || state.self.skippedRes) ? "profile" : "self");
+        else go(quizDone() ? "profile" : Object.keys(state.answers).length ? "quiz" : "birth");
+        break;
       case "restart": case "retake":
         store.clear();
         state = fresh();
@@ -1229,7 +1480,15 @@
         go(act === "retake" ? "birth" : "birth");
         break;
       case "to-intro": go("intro"); break;
-      case "birth-next": if (birthReady()) go("quiz"); break;
+      case "birth-next": if (birthReady()) go(state.mode === "self" ? "self" : "quiz"); break;
+      case "to-birth": go("birth"); break;
+      case "to-self": go("self"); break;
+      case "self-letter": setSelfLetter(+el.getAttribute("data-i"), el.getAttribute("data-v")); break;
+      case "self-sure": state.self.sure[el.getAttribute("data-d")] = el.getAttribute("data-v"); persist(); renderSelf(); break;
+      case "self-at": state.self.at = el.getAttribute("data-v"); persist(); renderSelf(); break;
+      case "self-source": state.self.source = el.getAttribute("data-v"); persist(); renderSelf(); break;
+      case "self-next": if (selfCode()) { state.qIndex = 0; state.quizStartedAt = null; go("quiz"); } break;
+      case "self-skip": if (selfCode()) { state.self.skippedRes = true; go("profile"); } break;
       case "city-pick":
         var c = cityResults[+el.getAttribute("data-i")];
         if (c) { state.birth.city = c; state.birth.tzManual = false; state.tzEditing = false; renderPlace(); renderPreview(); persist(); }
@@ -1239,10 +1498,10 @@
       case "tz-auto": state.birth.tzManual = false; state.tzEditing = false; renderTzLine(); renderPreview(); persist(); break;
       case "answer": answer(+el.getAttribute("data-v")); break;
       case "quiz-prev":
-        if (state.qIndex > 0) { state.qIndex--; persist(); renderQuiz(); } else go("birth");
+        if (state.qIndex > 0) { state.qIndex--; persist(); renderQuiz(); } else go(state.mode === "self" ? "self" : "birth");
         break;
       case "quiz-next": quizNext(); break;
-      case "to-quiz": state.qIndex = ITEMS.length - 1; go("quiz"); break;
+      case "to-quiz": state.qIndex = Q().length - 1; go("quiz"); break;
       case "prof": profPick(el.getAttribute("data-q"), el.getAttribute("data-v")); break;
       case "see-result": if (profileDone()) { current = null; go("loading"); } break;
       case "save-card": saveCard(); break;
@@ -1273,6 +1532,18 @@
   });
 
   app.addEventListener("input", function (e) {
+    if (e.target.id === "self-paste") {
+      var pc = T16.parseCode(e.target.value);
+      if (pc) {
+        state.self.code = pc.type;
+        if (pc.at) state.self.at = pc.at;
+        persist();
+        renderSelf();
+        var inp = $("#self-paste");
+        if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+      }
+      return;
+    }
     if (e.target.id === "coords-paste") {
       var p = parseCoords(e.target.value);
       if (p) {
@@ -1288,12 +1559,13 @@
 
   app.addEventListener("submit", function (e) {
     if (e.target.id === "lead") { e.preventDefault(); submitLead(e.target); }
+    if (e.target.id === "mailf") { e.preventDefault(); submitMail(e.target); }
   });
 
   document.addEventListener("keydown", function (e) {
     if (state.step !== "quiz" || e.metaKey || e.ctrlKey || e.altKey) return;
-    var q = ITEMS[state.qIndex];
-    var max = q.kind === "bi" ? 7 : 5;
+    var q = Q()[state.qIndex];
+    var max = 7;
     var n = parseInt(e.key, 10);
     if (n >= 1 && n <= max) { e.preventDefault(); answer(n); }
     if (e.key === "ArrowLeft" && state.qIndex > 0) { state.qIndex--; renderQuiz(); }
@@ -1333,10 +1605,16 @@
     s.birth = Object.assign(s.birth, { year: 1998, month: 7, day: 3, hour: 9, minute: 30, placeMode: "coords", lat: "22.5431", lon: "114.0579", tzAuto: "Asia/Shanghai" });
     var seed = 7;
     var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-    ITEMS.forEach(function (q) { s.answers[q.item.id] = q.kind === "bi" ? 1 + Math.floor(rnd() * 7) : 1 + Math.floor(rnd() * 5); });
-    s.qIndex = d === "quiz" ? 5 : ITEMS.length - 1;
+    if (d === "self" || d === "self-result") {
+      s.mode = "self";
+      s.self.code = "ENFP";
+      s.self.at = "T";
+    }
+    state = s;
+    Q().forEach(function (q) { s.answers[q.item.id] = 1 + Math.floor(rnd() * 7); });
+    s.qIndex = d === "quiz" ? 5 : Q().length - 1;
     s.profile = { level: "MA", disciplines: ["curating", "photo"], stage: 2, timeline: 1, budget: 3, city: "metro", ielts: "6-6.5" };
-    s.step = d === "result" ? "result" : d === "profile" ? "profile" : d === "quiz" ? "quiz" : "birth";
+    s.step = d === "result" || d === "self-result" ? "result" : d === "profile" ? "profile" : d === "quiz" ? "quiz" : d === "self" ? "self" : "birth";
     if (d === "quiz") { s.answers = {}; }
     state = s;
   })();

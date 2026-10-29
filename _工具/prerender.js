@@ -9,7 +9,7 @@
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
 const dir = path.resolve(process.argv[2] || 'site'), file = path.join(dir, 'index.html');
 (async () => {
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+  const b = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}); const p = await b.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
   // start from the template without any previous prerender (sections emptied), so output is stable
   await p.goto('file://' + file + '?lang=zh', { waitUntil: 'load' }); await p.waitForTimeout(600);
   let html = await p.evaluate(() => {

@@ -2,31 +2,37 @@
  * AG LAB · 创作人格实验室 — all copy, questions and data.
  * Every visible string is { zh, en }. Edit here; the page renders from it.
  * School tags are editorial judgements to be checked by the team before launch.
+ * The question bank lives in lab-items.js and the reading copy (paths, star
+ * signs) in lab-reading.js; both load after this file and add to LAB.
+ * Also loaded by workers/lab-results to build the results email.
  */
-window.LAB = {
+(typeof window !== "undefined" ? window : globalThis).LAB = {
   meta: {
-    // POST endpoint for leads (see server/lead-function). Empty → falls back to email.
-    leadEndpoint: "",
+    // POST endpoints served by workers/lab-results (same origin). Empty → falls back to email.
+    leadEndpoint: "/api/lab/lead",
+    resultsEndpoint: "/api/lab/results",
+    // Cloudflare Turnstile site key (public). Empty → no widget; the Worker then skips the check.
+    turnstileSiteKey: "",
     // Public URL of this test, printed as a QR code on the share card.
     // Empty → uses SITE.meta.domain + "/lab/".
     shareUrl: "",
     campaign: "ag-lab-2026",
-    version: "1.0.0"
+    version: "2.0.0"
   },
 
   ui: {
     brand: { zh: "先端艺培 · AG LAB", en: "Avantgarde Studio · AG LAB" },
     labName: { zh: "创作人格实验室", en: "Creative Persona Lab" },
     back: { zh: "返回官网", en: "Back to site" },
-    introKicker: { zh: "免费测试 · 约 8 分钟", en: "Free · about 8 minutes" },
+    introKicker: { zh: "免费测试 · 约 10 分钟", en: "Free · about 10 minutes" },
     introTitle: { zh: "你是哪一种\u200b创作者？", en: "What kind of maker are you?" }, // \u200b: where the title may break
     introLead: {
-      zh: "用四柱八字读出你的五行气质，用 16 型人格看见你的创作方式，再为你匹配国家、院校与导师风格。",
-      en: "Your Four Pillars reveal your elemental temperament, a 16-type profile shows how you create — then we match you with countries, schools and mentor styles."
+      zh: "用四柱八字读出你的五行气质，用 16 型人格看见你的创作方式，再配上你的\u200b太阳、月亮与上升星座，描绘你可能成为的\u200b艺术家与研究者，并匹配\u200b适合你的\u200b国家、院校与导师风格。", // \u200b: where the lead may break
+      en: "Your Four Pillars reveal your elemental temperament, a 16-type profile shows how you create, and your Sun, Moon and Rising signs add colour — together they sketch the artist or researcher you might become, matched with countries, schools and mentor styles."
     },
     introParts: [
       { n: "01", zh: "出生信息", en: "Birth details", d: { zh: "排出你的四柱八字", en: "Your Four Pillars chart" } },
-      { n: "02", zh: "56 道题", en: "56 questions", d: { zh: "16 型创作人格与韧性", en: "Your 16-type profile and resilience" } },
+      { n: "02", zh: "60 道题", en: "60 questions", d: { zh: "或直接填写你的 MBTI", en: "Or just enter your MBTI" } },
       { n: "03", zh: "申请画像", en: "Your plans", d: { zh: "匹配国家、院校与导师", en: "Countries, schools and mentors" } }
     ],
     privacyPromise: {
@@ -34,6 +40,7 @@ window.LAB = {
       en: "Your birth details are calculated in your browser and never uploaded."
     },
     start: { zh: "开始测试", en: "Start" },
+    startSelf: { zh: "我已经知道我的 MBTI", en: "I already know my MBTI" },
     resume: { zh: "继续上次的测试", en: "Continue where you left off" },
     restart: { zh: "重新开始", en: "Start over" },
     next: { zh: "下一步", en: "Next" },
@@ -95,7 +102,15 @@ window.LAB = {
     previewNeed: { zh: "填好日期、时间与出生地后，这里会显示你的四柱。", en: "Fill in date, time and place to see your pillars here." },
 
     quizTitle: { zh: "16 型创作人格", en: "Your 16-type profile" },
-    quizLead: { zh: "凭第一反应选择，没有对错。越靠近哪一边，代表越像那一句。", en: "Go with your first instinct — there are no right answers. The closer you pick to a side, the more that statement sounds like you." },
+    quizLead: { zh: "凭第一反应选择，没有对错。这句话有多像你？越靠右越同意。", en: "Go with your first instinct — there are no right answers. How much does each statement sound like you? Further right means you agree more." },
+    resLead: { zh: "最后 8 题关于创作韧性：被批评、被拒绝、不确定时，你通常怎样？", en: "Eight last questions: how do you usually handle critique, rejection and not knowing yet?" },
+    disagree: { zh: "不同意", en: "Disagree" },
+    agree: { zh: "同意", en: "Agree" },
+    scale7: [
+      { zh: "非常不同意", en: "Strongly disagree" }, { zh: "不同意", en: "Disagree" }, { zh: "有点不同意", en: "Slightly disagree" },
+      { zh: "中立", en: "Neutral" },
+      { zh: "有点同意", en: "Slightly agree" }, { zh: "同意", en: "Agree" }, { zh: "非常同意", en: "Strongly agree" }
+    ],
     moreLeft: { zh: "更像左边", en: "More like left" },
     moreRight: { zh: "更像右边", en: "More like right" },
     neutral: { zh: "差不多", en: "About equal" },
@@ -110,6 +125,25 @@ window.LAB = {
     sectionType: { zh: "性格倾向", en: "Preferences" },
     sectionRes: { zh: "创作韧性", en: "Creative resilience" },
 
+    selfTitle: { zh: "你的 MBTI", en: "Your MBTI" },
+    selfLead: { zh: "做过 MBTI 或 16Personalities？\u200b填好结果，\u200b就能跳过 48 道题。", en: "Already taken MBTI or 16Personalities? Enter your result and skip the 48 type questions." },
+    selfPaste: { zh: "直接粘贴，如 INFJ-T", en: "Or paste it, e.g. INFJ-T" },
+    selfPairs: { zh: "四个字母", en: "Your four letters" },
+    selfSure: { zh: "有多确定？", en: "How sure are you?" },
+    sureOpts: { slight: { zh: "两边都像", en: "Either way" }, moderate: { zh: "比较确定", en: "Fairly sure" }, clear: { zh: "非常确定", en: "Very sure" } },
+    selfAT: { zh: "身份标识（选填）", en: "Identity (optional)" },
+    atOpts: [{ v: "", zh: "没有", en: "None" }, { v: "A", zh: "-A 坚定型", en: "-A Assertive" }, { v: "T", zh: "-T 动荡型", en: "-T Turbulent" }],
+    selfSource: { zh: "结果来自", en: "Where it came from" },
+    sourceOpts: [
+      { v: "official", zh: "官方 MBTI®", en: "Official MBTI®" }, { v: "16p", zh: "16Personalities", en: "16Personalities" },
+      { v: "other", zh: "其他测试", en: "Another test" }, { v: "self", zh: "自己判断", en: "My own judgement" }
+    ],
+    selfNext: { zh: "继续：8 道韧性题", en: "Next: 8 quick questions" },
+    selfSkip: { zh: "跳过，直接填申请画像", en: "Skip to your plans" },
+    selfReported: { zh: "自填结果", en: "Self-reported" },
+    selfReportedNote: { zh: "这是你自己填写的类型，所以这里不显示作答质量，百分比按你选的确定程度给出。想要更细的分析，可以做完整测试。", en: "You entered this type yourself, so there is no answer-quality check and the percentages follow how sure you said you are. Take the full test for a finer-grained profile." },
+    resEstimated: { zh: "你跳过了韧性题，这里按 -A/-T 标识或中间值估算。", en: "You skipped the resilience questions, so this is estimated from your -A/-T identity or set to the middle." },
+
     profileTitle: { zh: "申请画像", en: "Your plans" },
     profileLead: { zh: "这些信息决定院校匹配的主要结果。", en: "These answers drive most of the school matching." },
     seeResult: { zh: "生成我的创作人格", en: "Reveal my creative persona" },
@@ -122,6 +156,7 @@ window.LAB = {
       { zh: "按节气排定四柱", en: "Setting the Four Pillars by solar terms" },
       { zh: "分析五行、旺衰与格局", en: "Weighing elements, strength and pattern" },
       { zh: "计算 16 型创作人格", en: "Scoring your 16-type profile" },
+      { zh: "推算太阳、月亮与上升星座", en: "Finding your Sun, Moon and Rising" },
       { zh: "匹配国家、院校与导师", en: "Matching countries, schools and mentors" }
     ],
 
@@ -131,9 +166,11 @@ window.LAB = {
     copied: { zh: "已复制", en: "Copied" },
     retake: { zh: "重新测试", en: "Take it again" },
     tabs: [
+      { id: "who", zh: "你是谁", en: "Who you are" },
       { id: "wuxing", zh: "五行气质", en: "Elements" },
       { id: "chart", zh: "专业排盘", en: "Full chart" },
       { id: "type", zh: "16型人格", en: "16-type" },
+      { id: "paths", zh: "创作路径", en: "Paths" },
       { id: "match", zh: "匹配结果", en: "Matches" }
     ],
     dayMaster: { zh: "日主", en: "Day Master" },
@@ -209,7 +246,9 @@ window.LAB = {
     qualityFlags: {
       straight: { zh: "大部分题选了同一个选项", en: "Most answers were the same option" },
       neutral: { zh: "中间选项过多，区分度较低", en: "Many neutral answers, so the result is less clear" },
-      position: { zh: "几乎总选同一侧，可能受位置影响", en: "Almost always the same side — position may have influenced answers" },
+      acquiescence: { zh: "无论题目说什么都倾向同意（或不同意），结果可能偏移", en: "A tendency to agree (or disagree) whatever the statement, which can skew results" },
+      inconsistent: { zh: "几组意思相近的题，答案前后不太一致", en: "Some closely related statements got quite different answers" },
+      attention: { zh: "注意力检查题没有按要求作答", en: "An attention-check question wasn't answered as asked" },
       fast: { zh: "作答非常快", en: "Answered very quickly" },
       missing: { zh: "有题目未作答", en: "Some questions were skipped" }
     },
@@ -244,7 +283,7 @@ window.LAB = {
     fAge: { zh: "学生年龄", en: "Student's age" },
     ageOpts: [{ v: "u14", zh: "未满 14 岁", en: "Under 14" }, { v: "14-17", zh: "14–17 岁", en: "14–17" }, { v: "18+", zh: "18 岁及以上", en: "18 or over" }],
     cPrivacy: { zh: "我已阅读并同意《隐私说明》，同意先端艺培为联系我、提供解读而处理以上信息。", en: "I have read the Privacy Notice and agree that Avantgarde Studio may use these details to contact me and prepare my reading." },
-    cCross: { zh: "我知悉：信息存放在中国境内，先端艺培在伦敦的导师可能会查看这些信息以提供解读。", en: "I understand my details are stored in mainland China and may be viewed by Avantgarde Studio tutors in London to prepare my reading." },
+    cCross: { zh: "我同意：信息由 Cloudflare 存放在中国境外，先端艺培在伦敦的导师可能会查看这些信息以提供解读。", en: "I agree that my details are stored by Cloudflare outside mainland China and may be viewed by Avantgarde Studio tutors in London to prepare my reading." },
     cGuardian: { zh: "我是该学生的监护人，同意提交其信息。", en: "I am the student's parent or guardian and agree to submit these details." },
     cMinorNote: { zh: "未满 14 岁的学生，请由家长填写并勾选监护人同意。", en: "For students under 14, a parent must fill this in and give consent." },
     cChart: { zh: "（选填）附上我的出生日期、时间与排盘，便于导师深度解读。", en: "(Optional) Include my birth date, time and chart so the tutor can go deeper." },
@@ -256,10 +295,47 @@ window.LAB = {
     errRequired: { zh: "请填写称呼与联系方式，并勾选必需的同意项。", en: "Please add your name and contact, and tick the required boxes." },
     errSend: { zh: "提交没有成功，请稍后再试，或直接添加我们的微信。", en: "That didn't go through. Please try again, or add us on WeChat." },
 
+    who: {
+      sun: { zh: "太阳", en: "Sun" }, moon: { zh: "月亮", en: "Moon" }, rising: { zh: "上升", en: "Rising" },
+      sunRole: { zh: "核心驱动力", en: "Your core drive" },
+      moonRole: { zh: "滋养你创作的东西", en: "What fuels your making" },
+      risingRole: { zh: "作品给人的第一印象", en: "How your work first reads" },
+      or: { zh: "或", en: "or" },
+      cusp: { zh: "你出生在星座交界附近，两边的特质都可能有。", en: "You were born near a sign boundary, so you may carry traits of both." },
+      noTime: { zh: "没有出生时间，无法推算上升星座；月亮星座按当天范围给出。", en: "Without a birth time there is no Rising sign, and the Moon is given for the whole day." },
+      polar: { zh: "出生地纬度过高，上升星座无法稳定推算。", en: "Your birthplace is too far north or south for a stable Rising sign." },
+      blend: { zh: "组合解读", en: "How it blends" },
+      rhythm: { zh: "工作节奏", en: "Working rhythm" },
+      eastWest: { zh: "东方五行 × 西方星座", en: "East meets West" },
+      note: { zh: "星座按出生时刻与地点推算（回归黄道），仅供娱乐与自我探索。", en: "Signs are worked out from your birth time and place (tropical zodiac), for fun and self-reflection only." }
+    },
+    paths: {
+      title: { zh: "你可能成为的\u200b创作者", en: "The maker you might become" },
+      lead: { zh: "结合你的 16 型人格与五行气质，下面三条路径值得试试。", en: "From your 16-type profile and elemental temperament, three paths worth trying." },
+      research: { zh: "你的研究方式", en: "How you research" },
+      allies: { zh: "最好的合作伙伴", en: "Your best collaborators" },
+      habit: { zh: "这周可以试试", en: "Try this week" },
+      element: { zh: "五行底色", en: "Your elemental colour" }
+    },
+    mail: {
+      title: { zh: "把结果\u200b发到我的邮箱", en: "Email me my results" },
+      lead: { zh: "完整解读会发到你的邮箱，方便保存和以后对照。", en: "We'll send the full reading to your inbox so you can keep it." },
+      email: { zh: "邮箱", en: "Email" },
+      cStore: { zh: "我同意先端艺培保存我的测试结果与邮箱（由 Cloudflare 存放在中国境外，最长 12 个月），用于发送结果。", en: "I agree that Avantgarde Studio may keep my results and email (stored by Cloudflare outside mainland China, for up to 12 months) to send me my results." },
+      cAge: { zh: "我已满 14 岁，或已由家长陪同填写。", en: "I'm 14 or over, or a parent is helping me." },
+      cResearch: { zh: "（选填）允许匿名使用我的逐题作答，用于改进测试。", en: "(Optional) Use my individual answers anonymously to improve the test." },
+      cContact: { zh: "（选填）也请导师通过邮件联系我，聊聊申请。", en: "(Optional) I'd also like a tutor to email me about applying." },
+      send: { zh: "发送结果", en: "Send my results" },
+      sent: { zh: "已发送！请查收邮箱（也看看垃圾邮件）。", en: "Sent! Check your inbox (and your spam folder)." },
+      err: { zh: "请填写有效邮箱，并勾选两个必需的同意项。", en: "Please enter a valid email and tick the two required boxes." },
+      fail: { zh: "暂时没有发送成功，请稍后再试。", en: "That didn't send. Please try again in a moment." },
+      limited: { zh: "发送太频繁了，请稍后再试。", en: "Too many tries — please wait a little and try again." }
+    },
+
     methodTitle: { zh: "方法与说明", en: "Method and notes" },
     disclaimer: {
-      zh: "本测试用于自我探索与创作方向参考，不构成任何预测，也不能预测录取结果。院校匹配基于你填写的申请信息与编辑判断，申请前请以院校官方信息为准。",
-      en: "This test is for self-reflection and creative direction only. It makes no predictions and cannot predict admission. School matches are based on your answers and our editorial judgement; always check official school information."
+      zh: "本测试用于自我探索与创作方向参考，不构成任何预测，也不能预测录取结果；星座与五行部分仅供娱乐。院校匹配基于你填写的申请信息与编辑判断，申请前请以院校官方信息为准。",
+      en: "This test is for self-reflection and creative direction only. It makes no predictions and cannot predict admission; the star-sign and five-element parts are for fun. School matches are based on your answers and our editorial judgement; always check official school information."
     },
     errors: {
       BAD_DATE: { zh: "这个日期不存在，请检查。", en: "That date doesn't exist." },
@@ -343,9 +419,7 @@ window.LAB = {
     SG: { zh: "新加坡近赤道，南方属火。", en: "Singapore sits near the equator: the South (Fire)." }
   },
 
-  /* ---------------- 16-type items ----------------
-   * a = the E / S / T / J statement, b = the I / N / F / P statement.
-   * swap:true shows b on the left. Every facet has two of each. */
+  /* ---------------- 16-type facets (items live in lab-items.js) ---------------- */
   facets: {
     energy: { zh: "能量来源", en: "Energy" },
     expression: { zh: "表达方式", en: "Expression" },
@@ -360,78 +434,6 @@ window.LAB = {
     pace: { zh: "工作节奏", en: "Pace" },
     closure: { zh: "收束方式", en: "Closure" }
   },
-  items: [
-    { id: "ei1", d: "EI", f: "energy", swap: false, a: { zh: "忙了一周，和朋友出去聚聚最能回血", en: "After a long week, going out with friends recharges me" }, b: { zh: "忙了一周，一个人待着最能回血", en: "After a long week, time alone recharges me" } },
-    { id: "ei2", d: "EI", f: "energy", swap: true, a: { zh: "工作室里有人一起做，我更有状态", en: "I work best in a studio buzzing with people" }, b: { zh: "工作室里安静独处，我更有状态", en: "I work best when the studio is quiet and I'm alone" } },
-    { id: "ei3", d: "EI", f: "energy", swap: false, a: { zh: "开幕酒会让我兴奋，想多认识些人", en: "Opening nights energise me — I want to meet people" }, b: { zh: "开幕酒会让我有点累，看完作品就想走", en: "Opening nights tire me — I see the work and slip away" } },
-    { id: "ei4", d: "EI", f: "energy", swap: true, a: { zh: "空闲的周末，我想约人出去", en: "On a free weekend I'd rather make plans with people" }, b: { zh: "空闲的周末，我想留给自己", en: "On a free weekend I'd rather keep it for myself" } },
-
-    { id: "ei5", d: "EI", f: "expression", swap: true, a: { zh: "想法常常是边说边成形的", en: "My ideas take shape as I talk them through" }, b: { zh: "想法要先在脑子里想清楚再说", en: "I think an idea through before I say it" } },
-    { id: "ei6", d: "EI", f: "expression", swap: false, a: { zh: "小组讨论时，我通常很快开口", en: "In group discussions I usually speak up early" }, b: { zh: "小组讨论时，我通常先听，想好再说", en: "In group discussions I listen first, then speak" } },
-    { id: "ei7", d: "EI", f: "expression", swap: true, a: { zh: "卡住的时候，我喜欢找人聊一聊", en: "When I'm stuck, I like to talk it out" }, b: { zh: "卡住的时候，我喜欢自己先琢磨", en: "When I'm stuck, I work it out on my own first" } },
-    { id: "ei8", d: "EI", f: "expression", swap: false, a: { zh: "别人通常很容易看出我在想什么", en: "People can usually tell what I'm thinking" }, b: { zh: "我的很多想法，别人不太容易看出来", en: "A lot of what I think stays on the inside" } },
-
-    { id: "ei9", d: "EI", f: "connection", swap: false, a: { zh: "我喜欢认识很多不同圈子的人", en: "I like knowing people across many circles" }, b: { zh: "我更珍惜少数几个很懂我的人", en: "I treasure a few people who really get me" } },
-    { id: "ei10", d: "EI", f: "connection", swap: true, a: { zh: "到了新环境，我会先主动打招呼", en: "In a new place, I'm the one who says hello first" }, b: { zh: "到了新环境，我熟悉了才慢慢打开", en: "In a new place, I open up once I've settled in" } },
-    { id: "ei11", d: "EI", f: "connection", swap: false, a: { zh: "一大群人一起创作让我很兴奋", en: "Making work with a big group excites me" }, b: { zh: "我更享受一个人把作品做完", en: "I'd rather see a piece through on my own" } },
-    { id: "ei12", d: "EI", f: "connection", swap: true, a: { zh: "我乐意在很多人面前讲自己的作品", en: "I'm happy presenting my work to a full room" }, b: { zh: "我更喜欢一对一地聊自己的作品", en: "I'd rather talk about my work one-to-one" } },
-
-    { id: "sn1", d: "SN", f: "perception", swap: false, a: { zh: "看一幅画，我先注意材料、笔触和细节", en: "Looking at a painting, I first notice materials, marks and details" }, b: { zh: "看一幅画，我先想它在表达什么", en: "Looking at a painting, I first wonder what it's saying" } },
-    { id: "sn2", d: "SN", f: "perception", swap: true, a: { zh: "讲一件事，我会讲清具体经过", en: "When I tell a story, I give the concrete sequence" }, b: { zh: "讲一件事，我更爱讲它给我的感觉和意义", en: "When I tell a story, I talk about its feeling and meaning" } },
-    { id: "sn3", d: "SN", f: "perception", swap: false, a: { zh: "我相信亲眼看到、亲手摸到的东西", en: "I trust what I can see and touch" }, b: { zh: "我相信直觉和预感，哪怕说不清原因", en: "I trust hunches, even when I can't explain them" } },
-    { id: "sn4", d: "SN", f: "perception", swap: true, a: { zh: "我记住的多是事实和具体细节", en: "I tend to remember facts and specifics" }, b: { zh: "我记住的多是整体印象和联想", en: "I tend to remember the overall impression and associations" } },
-
-    { id: "sn5", d: "SN", f: "orientation", swap: true, a: { zh: "我更关心一个想法现在能不能做出来", en: "I care whether an idea can be made now" }, b: { zh: "我更关心一个想法将来可能变成什么", en: "I care what an idea could become" } },
-    { id: "sn6", d: "SN", f: "orientation", swap: false, a: { zh: "我喜欢把一种做法练到极致", en: "I like to perfect one method" }, b: { zh: "我总想试试没人用过的做法", en: "I keep wanting to try methods no one has used" } },
-    { id: "sn7", d: "SN", f: "orientation", swap: true, a: { zh: "“实际可行”最能说服我", en: "“It works in practice” convinces me" }, b: { zh: "“从没见过”最能吸引我", en: "“I've never seen that before” pulls me in" } },
-    { id: "sn8", d: "SN", f: "orientation", swap: false, a: { zh: "我喜欢脚踏实地，一步一步往前", en: "I like to move forward step by step, feet on the ground" }, b: { zh: "我常常一下子跳到很远的想象里", en: "I often leap far ahead in my imagination" } },
-
-    { id: "sn9", d: "SN", f: "learning", swap: false, a: { zh: "学新软件，我喜欢跟着教程一步步来", en: "Learning new software, I follow a tutorial step by step" }, b: { zh: "学新软件，我喜欢先到处点点、自己摸索", en: "Learning new software, I click around and figure it out" } },
-    { id: "sn10", d: "SN", f: "learning", swap: true, a: { zh: "我更喜欢有清晰示例的讲解", en: "I prefer explanations with clear examples" }, b: { zh: "我更喜欢先讲原理，再自己举一反三", en: "I prefer the principle first, then I work out the rest" } },
-    { id: "sn11", d: "SN", f: "learning", swap: false, a: { zh: "读理论时，我会想它和实际有什么关系", en: "Reading theory, I ask how it applies in practice" }, b: { zh: "读理论时，我会被概念本身迷住", en: "Reading theory, I get hooked on the ideas themselves" } },
-    { id: "sn12", d: "SN", f: "learning", swap: true, a: { zh: "我更愿意用验证过的方法做事", en: "I'd rather use a proven method" }, b: { zh: "我更愿意找一种新的方法做事", en: "I'd rather find a new way to do it" } },
-
-    { id: "tf1", d: "TF", f: "deciding", swap: false, a: { zh: "做决定时，我先看是否合理、合逻辑", en: "When deciding, I first check whether it's logical" }, b: { zh: "做决定时，我先看它对人有什么影响", en: "When deciding, I first consider how it affects people" } },
-    { id: "tf2", d: "TF", f: "deciding", swap: true, a: { zh: "选题时，我更看重论证是否站得住", en: "Choosing a project, I weigh whether the argument holds up" }, b: { zh: "选题时，我更看重它是否打动我", en: "Choosing a project, I weigh whether it moves me" } },
-    { id: "tf3", d: "TF", f: "deciding", swap: false, a: { zh: "朋友诉苦时，我倾向帮他分析怎么解决", en: "When a friend is upset, I help them work out a solution" }, b: { zh: "朋友诉苦时，我倾向先陪伴、先理解", en: "When a friend is upset, I listen and stay with them first" } },
-    { id: "tf4", d: "TF", f: "deciding", swap: true, a: { zh: "别人常说我很理性", en: "People often call me rational" }, b: { zh: "别人常说我很有同理心", en: "People often call me empathetic" } },
-
-    { id: "tf5", d: "TF", f: "feedback", swap: true, a: { zh: "给同学的作品提意见，我会直接指出问题", en: "Giving feedback on a peer's work, I name the problems directly" }, b: { zh: "给同学的作品提意见，我会先肯定再委婉建议", en: "Giving feedback, I start with what works and suggest gently" } },
-    { id: "tf6", d: "TF", f: "feedback", swap: false, a: { zh: "在 crit 上被尖锐批评，我更在意说得对不对", en: "In a tough crit, I care whether the critique is right" }, b: { zh: "在 crit 上被尖锐批评，我更在意对方的态度", en: "In a tough crit, I notice how it was said" } },
-    { id: "tf7", d: "TF", f: "feedback", swap: true, a: { zh: "我觉得说实话比照顾情绪更重要", en: "Being honest matters more than sparing feelings" }, b: { zh: "我觉得怎么说和说什么一样重要", en: "How something is said matters as much as what is said" } },
-    { id: "tf8", d: "TF", f: "feedback", swap: false, a: { zh: "讨论时，我不介意为观点争一争", en: "In discussion, I don't mind a good argument" }, b: { zh: "讨论时，我更希望大家和气地达成共识", en: "In discussion, I'd rather we agree kindly" } },
-
-    { id: "tf9", d: "TF", f: "evaluating", swap: false, a: { zh: "评价作品，我看它是否达成了自己的目标", en: "I judge a work by whether it achieves its aims" }, b: { zh: "评价作品，我看它是否真诚、有温度", en: "I judge a work by whether it's sincere and warm" } },
-    { id: "tf10", d: "TF", f: "evaluating", swap: true, a: { zh: "规则应该对每个人一视同仁", en: "Rules should apply equally to everyone" }, b: { zh: "规则应该考虑每个人的具体处境", en: "Rules should consider each person's situation" } },
-    { id: "tf11", d: "TF", f: "evaluating", swap: false, a: { zh: "严密的分析更容易说服我", en: "A rigorous analysis persuades me" }, b: { zh: "真实的故事更容易说服我", en: "A true story persuades me" } },
-    { id: "tf12", d: "TF", f: "evaluating", swap: true, a: { zh: "在团队里，我最在意事情做得好不好", en: "In a team, I care most whether the work is good" }, b: { zh: "在团队里，我最在意大家相处得好不好", en: "In a team, I care most about how everyone is getting on" } },
-
-    { id: "jp1", d: "JP", f: "planning", swap: false, a: { zh: "出门旅行前，我喜欢把行程排好", en: "Before a trip, I like the itinerary sorted" }, b: { zh: "出门旅行，我喜欢到了再说", en: "On a trip, I like to decide as I go" } },
-    { id: "jp2", d: "JP", f: "planning", swap: true, a: { zh: "我的桌面和文件夹通常井井有条", en: "My desk and folders are usually organised" }, b: { zh: "我的桌面和文件夹通常是“乱中有序”", en: "My desk and folders are “organised chaos”" } },
-    { id: "jp3", d: "JP", f: "planning", swap: false, a: { zh: "有明确的计划，我会更安心", en: "A clear plan puts me at ease" }, b: { zh: "计划排得太满，我会觉得被困住", en: "Too much planning makes me feel boxed in" } },
-    { id: "jp4", d: "JP", f: "planning", swap: true, a: { zh: "我喜欢提前把一周安排好", en: "I like to plan my week in advance" }, b: { zh: "我喜欢让一周保持弹性", en: "I like to keep my week flexible" } },
-
-    { id: "jp5", d: "JP", f: "pace", swap: true, a: { zh: "接到作业，我通常马上开始", en: "When I get an assignment, I start right away" }, b: { zh: "接到作业，我常在截止前集中爆发", en: "When I get an assignment, I often do my best work near the deadline" } },
-    { id: "jp6", d: "JP", f: "pace", swap: false, a: { zh: "事情没做完，我会一直惦记", en: "Unfinished tasks nag at me" }, b: { zh: "事情没做完，我也能先放一放", en: "I can leave unfinished tasks for a while" } },
-    { id: "jp7", d: "JP", f: "pace", swap: true, a: { zh: "我习惯把大任务拆成小步，按时推进", en: "I break big tasks into steps and keep to a schedule" }, b: { zh: "我习惯灵感来了，一口气做完", en: "I work in bursts when inspiration hits" } },
-    { id: "jp8", d: "JP", f: "pace", swap: false, a: { zh: "截止日期让我紧张，我喜欢留足余量", en: "Deadlines stress me — I like a buffer" }, b: { zh: "截止日期让我兴奋，压力下更有灵感", en: "Deadlines excite me — pressure sparks ideas" } },
-
-    { id: "jp9", d: "JP", f: "closure", swap: false, a: { zh: "方案定下来后，我不喜欢再大改", en: "Once a plan is set, I don't like big changes" }, b: { zh: "方案定了，有更好的想法我也愿意推翻", en: "Even after a plan is set, I'll tear it up for a better idea" } },
-    { id: "jp10", d: "JP", f: "closure", swap: true, a: { zh: "我喜欢尽快做决定，把事情定下来", en: "I like to decide quickly and settle things" }, b: { zh: "我喜欢多留些选择，晚一点再定", en: "I like to keep options open and decide later" } },
-    { id: "jp11", d: "JP", f: "closure", swap: false, a: { zh: "作品完成时，我喜欢有“收尾”的感觉", en: "I like the feeling of finishing a piece" }, b: { zh: "我的作品对我来说总是“进行中”", en: "My work always feels in progress" } },
-    { id: "jp12", d: "JP", f: "closure", swap: true, a: { zh: "面对选择，我不喜欢悬而未决", en: "I dislike leaving choices hanging" }, b: { zh: "面对选择，我享受还有可能性的状态", en: "I enjoy the state where things are still possible" } }
-  ],
-  resilience: [
-    { id: "r1", key: 1, t: { zh: "被批评之后，我通常能很快调整状态", en: "After criticism, I usually bounce back quickly" } },
-    { id: "r2", key: -1, t: { zh: "一次失败会让我怀疑自己是否适合做艺术", en: "One failure can make me doubt whether I'm cut out for art" } },
-    { id: "r3", key: 1, t: { zh: "面对不确定的结果，我能保持平静", en: "I stay calm when outcomes are uncertain" } },
-    { id: "r4", key: -1, t: { zh: "我常担心作品不够好，迟迟不敢拿出来", en: "I often worry my work isn't good enough to show" } },
-    { id: "r5", key: 1, t: { zh: "压力大的时候，我仍能按自己的节奏做事", en: "Under pressure, I can still work at my own pace" } },
-    { id: "r6", key: -1, t: { zh: "别人的否定会让我难过很久", en: "Rejection stays with me for a long time" } },
-    { id: "r7", key: 1, t: { zh: "我相信能力可以通过练习不断提高", en: "I believe skill grows with practice" } },
-    { id: "r8", key: -1, t: { zh: "看到同龄人更出色，我会很焦虑", en: "Seeing peers do better makes me anxious" } }
-  ],
-
   /* ---------------- 16 types ---------------- */
   types: {
     INTJ: { name: { zh: "系统构想者", en: "The Systems Visionary" }, line: { zh: "先看见整体，再一步步把复杂的想法搭起来。", en: "You see the whole first, then build complex ideas piece by piece." }, strengths: { zh: "概念清晰、结构严谨，适合长线的研究型项目。", en: "Clear concepts and rigorous structure — made for long, research-led projects." }, edge: { zh: "试着更早把半成品拿出来给人看。", en: "Show work in progress earlier than feels comfortable." }, env: { zh: "给你独立时间、反馈标准又高的地方。", en: "Independence plus high-standard feedback." } },
@@ -594,8 +596,11 @@ window.LAB = {
       { zh: "本页不涉及大运、流年或任何预测。", en: "No luck cycles, yearly forecasts or predictions of any kind." }
     ],
     type: [
-      { zh: "48 道原创双极题，覆盖 E/I、S/N、T/F、J/P 四个维度，每个维度 3 个层面、各 4 题；左右两侧的倾向交替出现，以抵消总选同一边的偏差。", en: "48 original bipolar items across the four preference pairs, three facets each with four items; the pole sides alternate to cancel position bias." },
-      { zh: "结果以百分比与清晰度（轻微、中等、清晰、非常清晰）呈现；得分相同时按惯例归入 I、N、F、P。另含 8 题创作韧性量表（部分反向计分），并检查作答质量。", en: "Results show a percentage and a clarity band; exact ties go to I, N, F and P by convention. An 8-item resilience scale (partly reverse-scored) and an answer-quality check are included." },
+      { zh: "48 道原创单句题，按 7 级同意程度作答，覆盖 E/I、S/N、T/F、J/P 四个维度，每个维度 3 个层面、各 4 题；每个层面正向、反向计分各 2 题，总是同意或总是不同意会相互抵消。", en: "48 original single-statement items on a 7-point agreement scale, covering the four preference pairs with three facets of four items each; every facet has two items keyed each way, so agreeing (or disagreeing) with everything cancels out." },
+      { zh: "结果以百分比与清晰度（轻微、中等、清晰、非常清晰）呈现；得分相同时按惯例归入 I、N、F、P。另含 8 题创作韧性量表（半数反向计分）。", en: "Results show a percentage and a clarity band; exact ties go to I, N, F and P by convention. An 8-item creative-resilience scale (half reverse-scored) is included." },
+      { zh: "作答质量检查：一律同一选项、默认同意倾向、6 组相近题的前后一致性、2 道指令题与 2 道罕见题（注意力）以及作答速度。各量表的信度（Cronbach's α）会在积累足够的匿名数据后公布，目前属于初步版本。", en: "Answer-quality checks: straight-lining, acquiescence, consistency across 6 related pairs, 2 instructed and 2 infrequency items (attention) and answering speed. Reliability (Cronbach's α) for each scale will be published once enough anonymous data is in; for now the instrument is preliminary." },
+      { zh: "如果你直接填写 MBTI，结果按你填写的类型与确定程度呈现，不做作答质量判断。", en: "If you enter your MBTI directly, the report uses that type and how sure you are, with no answer-quality check." },
+      { zh: "星座：按出生时刻的世界协调时与出生地经纬度推算太阳、月亮与上升（回归黄道；Meeus 低精度算法，太阳约 0.01°，月亮约 0.05°），仅供娱乐。", en: "Star signs: Sun, Moon and Rising from your birth instant (UTC) and coordinates (tropical zodiac; Meeus low-precision formulas, Sun to about 0.01°, Moon to about 0.05°), for fun." },
       { zh: "本测评为先端艺培原创，基于荣格心理类型理论设计，与 MBTI® 官方测评无关。MBTI 是 The Myers-Briggs Company 的注册商标。", en: "This is an original Avantgarde Studio instrument based on Jungian type theory, not the official MBTI® assessment. MBTI is a registered trademark of The Myers-Briggs Company." }
     ],
     match: [
@@ -606,3 +611,4 @@ window.LAB = {
 
   credits: { zh: "城市数据：GeoNames（CC BY 4.0）· 历法：lunar\u2011javascript\u2060（6tail）", en: "City data: GeoNames (CC BY 4.0)\u00a0· Calendar: lunar\u2011javascript (6tail)" } // \u2011 hyphen and \u2060 joiner: the library name never breaks
 };
+if (typeof module === "object" && module.exports) module.exports = (typeof window !== "undefined" ? window : globalThis).LAB;
