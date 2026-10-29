@@ -1,0 +1,55 @@
+# Downloaded data the tools can fetch again (tools/fetch-data.sh), about 280 MB
+.cache/
+
+# Old manual backups (Git history replaces them) and the packed copy of site/
+_备份-*/
+AG-Studio-Website.zip
+
+# Dependencies (npm install brings them back)
+node_modules/
+
+# Secrets: never commit. Real settings live only on the servers.
+*.env
+*.env.*
+lead.env
+.dev.vars
+*.dev.vars.*
+workers/kuschonink-contact/wrangler.jsonc
+workers/**/.secrets*
+workers/**/secrets*.json
+schema.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Claude Code: personal settings stay local; .claude/launch.json is shared
+.claude/settings.local.json
+
+# Tool output
+test-results/
+playwright-report/
+
+# System files (and macOS leftovers inside unzipped folders)
+.DS_Store
+__MACOSX/
+._*
+Thumbs.db
+desktop.ini
+
+# Local only: this repo is public on GitHub (itom123/AVANTGARDESTUDIO).
+# Internal notes, people's terms, server setup and source artwork stay on the PC.
+README-内部说明.md
+AG LAB 进度说明.md
+上线前清单.md
+检查记录-2026-09-28.md
+检查记录图/
+平台实施包/
+视觉包/
+server/
+_工具/build-deck.py
+AG STUDIO - LOGO/
+原始材料/
+source-materials-EN/
+Squarespace-Wordpress-Export-*.xml
+.scratch/

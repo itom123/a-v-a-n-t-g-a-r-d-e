@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.a-v-a-n-t-g-a-r-d-e.com/sitemap.xml

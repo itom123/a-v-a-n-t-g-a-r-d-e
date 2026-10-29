@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>创作人格实验室 · 先端艺培 AG LAB</title>
+<meta name="description" content="四柱八字 × 16型创作人格 × 申请画像：免费测出你是哪一种创作者，并匹配国家、院校与导师风格。">
+<meta name="theme-color" content="#0e0f0e">
+<meta property="og:type" content="website">
+<meta property="og:title" content="你是哪一种创作者？｜先端艺培 AG LAB">
+<meta property="og:description" content="四柱八字 × 16型创作人格，免费测出你的创作人格。">
+<meta property="og:image" content="https://www.a-v-a-n-t-g-a-r-d-e.com/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/archivo-black.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="css/lab.css">
+</head>
+<body class="lab">
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="ag-mark" viewBox="391.23 490.32 407.94 208.49"><path d="M 512.02 682.29 L 482.34 682.29 C 480.97 682.29 479.75 683.14 479.28 684.43 L 475.54 694.67 C 475.07 695.96 473.85 696.81 472.48 696.81 L 400.95 696.81 C 396.69 696.81 393.23 693.36 393.23 689.1 L 431.23 508.88 C 431.91 505.09 434.68 501.17 438.94 501.17 L 556.5 500.96 C 560.77 500.96 563.43 504.18 564.22 508.68 L 602.21 689.1 C 602.21 693.36 598.75 696.81 594.49 696.81 L 523.16 696.81 C 521.91 696.81 520.78 696.1 520.23 694.98 L 514.95 684.12 C 514.41 683 513.27 682.29 512.02 682.29 "/><path d="M 762.42 693.8 L 749.72 693.84 C 744.23 693.52 738.89 690.67 737.13 684.84 L 736.29 683.84 C 736.29 683.84 728.97 688.83 718.7 690.67 C 699.18 694.16 690.55 692.8 690.55 692.8 C 634.61 692.8 596.24 647.45 596.24 591.51 C 596.24 537.27 640.2 493.31 694.44 493.31 C 742.27 492.32 797.17 522.69 796.87 595.74 L 796.87 676.89 C 796.87 695.91 781.45 693.8 762.42 693.8 "/></symbol>
+</svg>
+<div class="grain" id="grain" aria-hidden="true"></div>
+
+<header class="lab-nav">
+  <a class="lab-nav__brand" href="../" aria-label="Avantgarde Studio">
+    <svg class="lab-nav__mark" aria-hidden="true"><use href="#ag-mark"/></svg>
+    <span class="lab-nav__name"><b>AG LAB</b><small data-t="ui.labName">创作人格实验室</small></span>
+  </a>
+  <div class="lab-nav__tools">
+    <button class="lang" id="langBtn" type="button" aria-label="Switch language"><span data-l="zh">中</span><i>/</i><span data-l="en">EN</span></button>
+    <a class="lab-nav__back" href="../" data-t="ui.back">返回官网</a>
+  </div>
+</header>
+
+<main id="app" class="lab-main" aria-live="polite">
+  <noscript><p style="padding:40px 20px">请开启 JavaScript 进行测试。Please enable JavaScript to take the test.</p></noscript>
+</main>
+
+<footer class="lab-foot">
+  <span>© 2026 先端艺培 Avantgarde Studio · <a href="privacy.html">隐私说明 / Privacy</a></span>
+  <span data-t="credits">城市数据：GeoNames（CC BY 4.0）· 历法：lunar&#8209;javascript&#8288;（6tail）</span>
+</footer>
+
+<script src="../assets/js/content.js"></script>
+<script src="vendor/lunar.js"></script>
+<script src="vendor/qrcode.js" defer></script>
+<script src="js/lab-content.js"></script>
+<script src="js/bazi.js"></script>
+<script src="js/type16.js"></script>
+<script src="js/match.js"></script>
+<script src="js/card.js"></script>
+<script src="js/lab.js"></script>
+</body>
+</html>

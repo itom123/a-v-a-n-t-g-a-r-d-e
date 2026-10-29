@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 -2 130 108" role="img" aria-label="Skyline">
+  <defs>
+    <linearGradient id="sky-fade" gradientUnits="userSpaceOnUse" x1="10" x2="114" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <linearGradient id="sky-card-fade" gradientUnits="userSpaceOnUse" x1="70" x2="120" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <mask id="sky-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="120"><rect width="160" height="120" fill="url(#sky-fade)"/></mask>
+    <mask id="sky-card" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="120"><rect width="160" height="120" fill="url(#sky-card-fade)"/></mask>
+  </defs>
+  <g fill="#0e0f0e">
+    <g mask="url(#sky-mask)">
+      <path d="M122 104 44 0 26 18Z" opacity=".2"/>
+      <path d="M122 104 26 18 16 42Z" opacity=".34"/>
+      <path d="M122 104 16 42 14 68Z" opacity=".5"/>
+      <path d="M122 104 14 68 22 92Z" opacity=".66"/>
+      <path d="M122 104 22 92 40 104Z" opacity=".82"/>
+    </g>
+    <path mask="url(#sky-card)" d="M70 32h57a9 9 0 0 1 9 9v54a9 9 0 0 1-9 9H70Z"/>
+  </g>
+</svg>

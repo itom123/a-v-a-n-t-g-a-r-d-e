@@ -1,0 +1,22 @@
+{
+  "name": "ag-studio-website",
+  "private": true,
+  "description": "Avantgarde Studio website: site/ is the static site; _工具/ and tools/ rebuild and check it; server/ deploys it.",
+  "scripts": {
+    "setup": "npm install && playwright install chromium",
+    "preview": "node tools/preview-server.js site 8088",
+    "build": "node _工具/build-pages.js site && node _工具/prerender.js site",
+    "check": "node _工具/check-wrap.js site",
+    "check:stress": "node _工具/check-wrap.js site stress=1",
+    "check:contrast": "node _工具/check-contrast.js site",
+    "check:layout": "node _工具/check-layout.js site",
+    "test": "node tests/engine.test.js",
+    "test:server": "node server/lead-function/selftest.js",
+    "deploy": "npm run build && npx -y wrangler@4 pages deploy site --project-name avantgarde-site --branch main",
+    "deploy:london": "powershell -NoProfile -ExecutionPolicy Bypass -File server/ecs/deploy.ps1 -Server agstudio-us -Part site",
+    "deploy:shanghai": "powershell -NoProfile -ExecutionPolicy Bypass -File server/ecs/deploy.ps1 -Server agstudio -Part site"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

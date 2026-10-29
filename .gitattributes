@@ -1,0 +1,27 @@
+# Keep Unix line endings everywhere: the .sh, .service and nginx/Caddy files run on Linux servers.
+* text=auto eol=lf
+
+# Windows-only scripts may stay as they are
+*.ps1 text eol=lf
+
+# Binary files: never touch
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.xlsx binary
+*.pptx binary
+*.docx binary
+*.fig binary
+*.ai binary
+*.psd binary
+*.mp4 binary
+*.mov binary
