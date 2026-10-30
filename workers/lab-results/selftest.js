@@ -68,9 +68,22 @@ await test("lead: stores, notifies the studio and emails the visitor the full re
   assert.strictEqual(report.to, "li@example.com", "the full report goes to the email left in the form");
   assert.strictEqual(report.from.email, "hello@a-v-a-n-t-g-a-r-d-e.com", "visitor emails come from hello@, as on the contact form");
   assert.strictEqual(report.headers["Auto-Submitted"], "auto-generated");
-  assert.ok(report.html.indexOf("lockup-light.png") > 0 && /报告/.test(report.subject));
+  assert.ok(report.html.indexOf("badge.png") > 0 && /报告/.test(report.subject));
   assert.ok(report.html.indexOf("巨蟹座") > 0 && report.text.indexOf("天秤座") > 0, "signs in the email");
   assert.ok(report.text.indexOf("1 对 1") > 0 && report.text.indexOf("回复") > 0, "says why it was sent and how to delete");
+});
+await test("lead: the studio notice is readable (no raw keys or JSON) and in the studio template", async () => {
+  const { env, sent } = makeEnv();
+  const chart = { calendar: "solar", date: "1998-02-16", time: "14:30", place: "太仓 · 江苏 · CN", lat: 31.4, lon: 121.1, tz: "Asia/Shanghai", pillars: "戊寅 甲寅 甲午 辛未", strength: "slightly-weak", geJu: "建禄格", use: "水", fav: "木" };
+  const body = lead({ profile: { level: "MA", disciplines: ["photo"], stage: 3, timeline: 0, budget: 4, city: "metro", ielts: "7+" }, source: { referrer: "https://www.a-v-a-n-t-g-a-r-d-e.com/" }, consent: { privacy: true, crossBorder: true, chart: true }, chart }, { contact: "13915791688" });
+  await worker.fetch(req("/api/lab/lead", body), env);
+  const note = sent[0];
+  for (const s of [note.text, note.html]) {
+    assert.ok(!/[{}]"|"[a-z]+":/.test(s), "no JSON");
+    ["硕士", "摄影与影像", "基本成型", "今年", "55 万以上", "国际大都会", "7.0 及以上", "英国 87", "格拉斯哥艺术学院", "偏弱", "公历 1998-02-16 14:30", "学生本人", "18 岁及以上", "北京时间"].forEach((k) => assert.ok(s.indexOf(k) >= 0, k));
+  }
+  assert.ok(note.html.indexOf("badge.png") > 0 && note.html.indexOf('href="tel:13915791688"') > 0 && note.html.indexOf("mailto:li@example.com") > 0);
+  assert.ok(/新登记/.test(note.subject) && note.subject.indexOf("Li") > 0);
 });
 await test("lead: email is required and must look like an address", async () => {
   const { env, sent } = makeEnv();
@@ -135,7 +148,7 @@ await test("emails: studio template, every type × language, email-only ≥ 4 A4
       const all = m.html + m.text + m.subject;
       assert.ok(!/undefined|\[object|NaN/.test(all), ty + " " + lang);
       // the studio template: ink header with the light lockup, white card, footer lockup, WeCom card with initials only
-      ["lockup-light.png", "lockup-ink.png", "wechat-qr.png", "border-radius:18px 18px 0 0", "#0e0f0e", "XG"].forEach((k) => assert.ok(m.html.indexOf(k) > 0, k));
+      ["badge.png", "light only", "wechat-qr.png", "border-radius:18px 18px 0 0", "#0e0f0e", "XG"].forEach((k) => assert.ok(m.html.indexOf(k) > 0, k));
       assert.ok(!/顾向寅|Xiangyin|Gu Xiang/i.test(all), "tutors by initials only");
       const kb = Buffer.byteLength(m.html) / 1024;
       maxKb = Math.max(maxKb, kb);

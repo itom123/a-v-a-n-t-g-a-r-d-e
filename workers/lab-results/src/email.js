@@ -136,28 +136,101 @@ export function renderResultEmail(r, lang, site, profile) {
   };
 }
 
-/** Plain-text note to the studio inbox for a lead. */
-export function renderStudioEmail(kind, row, payload) {
-  const r = payload.result || payload.summary || {};
-  const persona = LAB.archetypes[r.archetype] ? `${LAB.archetypes[r.archetype].zh} / ${LAB.archetypes[r.archetype].en}` : "";
-  const sign = (i) => (i == null || !LAB.zodiac[i] ? "—" : LAB.zodiac[i].name.zh);
-  const lines = [
-    `AG LAB · ${kind === "lead" ? "新登记 New lead" : "邮件结果 + 请联系 Results + contact me"}`,
-    `ID: ${row.id}`,
-    `Persona: ${persona} · ${r.type || ""}${r.at ? "-" + r.at : ""} (${r.mode === "self" ? "self-reported" : "tested"})`,
-    `Sun/Moon/Rising: ${sign(r.sun)} / ${sign(r.moon)} / ${sign(r.rising)}`,
-    `Resilience: ${r.resilience} · Quality: ${r.quality}`,
-    `Countries: ${(r.countries || []).join(", ")}`,
-    `Schools: ${(r.schools || []).join(", ")}`,
-    `Profile: ${JSON.stringify(payload.profile || {})}`,
-    `Source: ${JSON.stringify(payload.source || {})}`
-  ];
-  if (kind === "lead") {
-    const c = payload.contact || {};
-    lines.splice(2, 0, `Name: ${c.name}`, `Contact: ${c.contact}`, `Email: ${c.email || "—"}`, `Who: ${c.who} · Age: ${c.age}`);
-    lines.push(payload.chart ? `Chart: ${JSON.stringify(payload.chart)}` : "Chart: (not shared)");
-  } else {
-    lines.splice(2, 0, `Email: ${payload.email}`);
-  }
-  return { subject: `AG LAB · ${kind === "lead" ? (payload.contact || {}).name : payload.email}`, text: lines.join("\n") };
+/* ---------------- studio notice for a new lead ----------------
+ * Same layout as the contact-form Worker's enquiry notice: bilingual labels, readable values
+ * (never raw keys or JSON), an HTML version in the studio template and a plain-text twin.
+ */
+const ZH = T("zh");
+const opt = (key, v) => {
+  const q = LAB.profile.find((x) => x.key === key);
+  const o = q && q.opts && q.opts.find((x) => x.v === v);
+  return o ? o.zh : null;
+};
+const both = (v) => (v ? v.zh + " · " + v.en : null);
+function shanghaiTime(d) {
+  return new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(d) + "（北京时间）";
+}
+function signName(i) { return i == null || !LAB.zodiac[i] ? null : LAB.zodiac[i].glyph + " " + LAB.zodiac[i].name.zh; }
+function scored(list, name) {
+  return (list || []).map((c) => { const [k, n] = String(c).split(":"); const nm = name(k); return nm ? nm + " " + n : null; }).filter(Boolean);
+}
+
+/** @returns {{subject:string, text:string, html:string}} */
+export function renderStudioEmail(row, payload, receivedAt) {
+  const r = payload.summary || {}, c = payload.contact || {}, pf = payload.profile || {}, ch = payload.chart, src = payload.source || {};
+  const arche = LAB.archetypes[r.archetype], type = LAB.types[r.type];
+  const isPhone = /^\+?[\d\s-]{7,}$/.test(c.contact || "");
+  const sections = [
+    ["联系人 · Contact", [
+      ["称呼 Name", c.name],
+      ["联系方式 Contact", c.contact && (c.contact + (isPhone ? "（手机）" : "（微信号或手机）"))],
+      ["邮箱 Email", c.email],
+      ["身份 Who", (LAB.ui.whoOpts.find((o) => o.v === c.who) || {}).zh],
+      ["学生年龄 Age", (LAB.ui.ageOpts.find((o) => o.v === c.age) || {}).zh],
+      ["页面语言 Language", payload.lang === "en" ? "English 英文" : "中文 Chinese"],
+      ["收到时间 Received", shanghaiTime(receivedAt || new Date())]
+    ]],
+    ["测试结果 · Result", [
+      ["创作人格 Persona", both(arche)],
+      ["16 型人格 Type", type && `${r.type}${r.at ? "-" + r.at : ""} · ${ZH(type.name)}（${r.mode === "self" ? "自填" + (r.source ? "，来自" + (LAB.ui.sourceOpts.find((o) => o.v === r.source) || {}).zh : "") : "测试得出"}）`],
+      ["太阳 / 月亮 / 上升", [signName(r.sun), signName(r.moon), signName(r.rising)].map((x) => x || "—").join(" / ")],
+      ["创作韧性 Resilience", r.resilience != null ? r.resilience + " / 100" : null],
+      ["答题质量 Quality", r.mode === "self" ? "自填，无测试" : LAB.ui.qualityLevels[r.quality] && LAB.ui.qualityLevels[r.quality].zh],
+      ["适合的导师风格 Mentor", r.mentor && LAB.mentors[r.mentor] && ZH(LAB.mentors[r.mentor])]
+    ]],
+    ["申请意向 · Plans", [
+      ["申请层级 Level", opt("level", pf.level)],
+      ["方向 Subjects", (pf.disciplines || []).map((d) => LAB.disciplines[d] && LAB.disciplines[d].zh).filter(Boolean).join("、")],
+      ["作品集进度 Portfolio", opt("stage", pf.stage)],
+      ["计划申请 Applying", opt("timeline", pf.timeline)],
+      ["每年预算 Budget", opt("budget", pf.budget)],
+      ["城市 City", opt("city", pf.city)],
+      ["雅思 IELTS", opt("ielts", pf.ielts)]
+    ]],
+    ["匹配结果 · Matches（匹配度）", [
+      ["国家地区 Countries", scored(r.countries, (k) => LAB.countries[k] && LAB.countries[k].zh).join("、")],
+      ["院校 Schools", scored(r.schools, (k) => { const s = LAB.schools.find((x) => x.id === k); return s && s.name.zh + "（" + s.city.zh + "）"; }).join("\n")]
+    ]],
+    ["出生信息 · Birth chart", ch ? [
+      ["出生 Born", `${ch.calendar === "lunar" ? "农历" : "公历"} ${ch.date}${ch.time ? " " + ch.time : "（未填时间）"}`],
+      ["出生地 Place", ch.place || (ch.lat != null ? ch.lat + ", " + ch.lon : null)],
+      ["四柱 Pillars", ch.pillars],
+      ["日主强弱 Strength", ch.strength && LAB.strengthLevels[ch.strength] && LAB.strengthLevels[ch.strength].zh],
+      ["格局 Pattern", ch.geJu],
+      ["用神 / 喜神", ch.use && ch.fav ? ch.use + " / " + ch.fav : null]
+    ] : [["出生信息", "对方未选择附上"]]],
+    ["来源 · Source", [
+      ["来源页面 Referrer", src.referrer],
+      ["渠道 Campaign", ["utm_source", "utm_medium", "utm_campaign"].map((k) => src[k]).filter(Boolean).join(" / ") || null],
+      ["编号 ID", row.id]
+    ]]
+  ].map(([title, rows]) => [title, rows.filter(([, v]) => v != null && v !== "")]);
+
+  const who = c.name || "—";
+  const subject = `AG LAB 新登记 New lead · ${who} · ${arche ? arche.zh : ""} ${r.type || ""}`.trim();
+  const replyNote = c.email ? "直接回复这封邮件即可联系对方；完整报告已自动发到对方邮箱。" : "对方没有留邮箱，请用上面的联系方式联系。";
+
+  const text = [
+    "AG LAB 新登记 · New lead", "",
+    ...sections.flatMap(([title, rows]) => [title, ...rows.map(([k, v]) => `  ${k}：${String(v).replace(/\n/g, "\n    ")}`), ""]),
+    replyNote
+  ].join("\n");
+
+  const cell = (k, v) => {
+    if (k.startsWith("邮箱")) return '<a href="mailto:' + esc(v) + '" style="color:' + C.ink + ';">' + esc(v) + "</a>";
+    if (k.startsWith("联系方式") && isPhone) return '<a href="tel:' + esc(c.contact.replace(/[\s-]/g, "")) + '" style="color:' + C.ink + ';">' + esc(v) + "</a>";
+    return esc(v).replace(/\n/g, "<br>");
+  };
+  const body =
+    heading("AG LAB 新登记") +
+    para("New lead from the AG LAB results page.", "color:" + C.mid + ";font-size:14px;margin-top:-10px;") +
+    sections.map(([title, rows]) => label(title) + detailRows(rows.map(([k, v]) => [k, cell(k, v)]))).join("") +
+    (c.email ? button("mailto:" + c.email + "?subject=" + encodeURIComponent("先端艺培 · 你的 AG LAB 解读"), "回复对方 Reply") : "") +
+    para(esc(replyNote), "margin:16px 0 0;font-size:13px;color:" + C.mid + ";");
+
+  return {
+    subject,
+    text,
+    html: emailShell({ lang: "zh", preheader: `${who} · ${c.contact || ""} · ${arche ? arche.zh : ""} ${r.type || ""}`, kicker: "AG LAB · New lead", body })
+  };
 }
