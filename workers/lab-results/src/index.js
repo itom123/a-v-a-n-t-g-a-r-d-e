@@ -120,8 +120,8 @@ async function handleLead(req, env) {
   // Storage problems must never stop the emails: log and carry on.
   const stored = await insertSubmission(env, id, now, "lead", p, r, null).then(() => true, (e) => { console.error("lead insert", e); return false; });
   const chart = consent.chart === true && p.chart ? cleanObj(p.chart, 1200) : null;
-  const note = renderStudioEmail("lead", { id }, { contact: { name, contact, email, who: str(c.who, 10), age: str(c.age, 10) }, summary: r, profile: p.profile, source: p.source, chart: chart ? JSON.parse(chart) : null });
-  const sent = env.STUDIO_TO ? await send(env, { from: notifyFrom(env), to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text }) : { status: "skipped", id: null };
+  const note = renderStudioEmail({ id }, { lang: p.lang, contact: { name, contact, email, who: str(c.who, 10), age: str(c.age, 10) }, summary: r, profile: p.profile, source: p.source, chart: chart ? JSON.parse(chart) : null }, new Date(now));
+  const sent = env.STUDIO_TO ? await send(env, { from: notifyFrom(env), to: env.STUDIO_TO, replyTo: email, subject: note.subject, text: note.text, html: note.html, headers: { "Auto-Submitted": "auto-generated" } }) : { status: "skipped", id: null };
 
   // The single results-page form: an email address there also gets the full report (≈ twice the web reading).
   let report;
