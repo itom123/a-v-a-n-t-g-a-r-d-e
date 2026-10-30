@@ -1,0 +1,37 @@
+# Sends one test lead through the live AG LAB endpoint, the same way the results-page form does.
+# Both emails (the studio notice and the full report) go to hello@, so no personal address appears in
+# these public logs. Actions → "AG LAB test lead" → Run workflow. The lead is stored in D1 like a real one;
+# its name is "测试 Test".
+name: AG LAB test lead
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post a test lead to /api/lab/lead
+        run: |
+          cat > lead.json <<'JSON'
+          {
+            "campaign": "ag-lab-test", "version": "2.0.0", "lang": "zh", "hp": "",
+            "source": { "referrer": "GitHub Actions test" },
+            "contact": { "name": "测试 Test", "contact": "13800000000", "email": "hello@a-v-a-n-t-g-a-r-d-e.com", "who": "student", "age": "18+" },
+            "consent": { "privacy": true, "crossBorder": true, "guardian": false, "chart": true },
+            "profile": { "level": "MA", "disciplines": ["photo"], "stage": 3, "timeline": 0, "budget": 4, "city": "metro", "ielts": "7+" },
+            "summary": {
+              "mode": "test", "archetype": "4NF", "element": 4, "dayMaster": 9, "type": "INFJ", "at": null, "source": null,
+              "dims": { "EI": 30, "SN": 22, "TF": 35, "JP": 60 }, "quality": "high", "flags": [], "resilience": 83, "mode5": "research",
+              "sun": 10, "moon": 6, "moonAlt": null, "rising": 3, "mentor": "critical", "mentor2": "dialogue",
+              "countries": ["UK:95", "HK:82", "SG:77"], "schools": ["lcc:96", "camberwell:95", "rca:94", "mmu:93", "uca:88"],
+              "strength": "slightly-weak", "strongest": 3, "missing": [1], "hidden": [1], "use": 3, "avoid": [1], "geju": "建禄格"
+            },
+            "chart": { "calendar": "solar", "date": "2000-01-01", "time": "12:00", "place": "上海 · CN", "pillars": "己卯 丙子 戊午 戊午", "strength": "slightly-weak", "geJu": "建禄格", "use": "水", "fav": "木" }
+          }
+          JSON
+          status=$(curl -sS -o out.json -w '%{http_code}' -X POST https://www.a-v-a-n-t-g-a-r-d-e.com/api/lab/lead \
+            -H 'Content-Type: application/json' -H 'Origin: https://www.a-v-a-n-t-g-a-r-d-e.com' --data @lead.json)
+          echo "HTTP $status"; cat out.json; echo
+          [ "$status" = 200 ] && grep -q '"reportSent":true' out.json
