@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # the contact-form step compares with the previous commit
       # Re-running an old run would put an old version of the site and Worker live again
       # (it happened: a re-run of #1 brought back the removed "email me my results" form).
       - name: Deploy only the latest main
@@ -38,6 +40,7 @@ jobs:
       - run: node tests/engine.test.js
       - run: node tests/secrets.test.js
       - run: node workers/lab-results/selftest.js
+      - run: node --check workers/contact-form/src/index.js
       - run: npm run build
       - name: Deploy to Cloudflare Pages
         run: npx -y wrangler@4 pages deploy site --project-name avantgarde-site --branch main --commit-hash "$GITHUB_SHA" --commit-message "${GITHUB_SHA::7}"
@@ -63,5 +66,23 @@ jobs:
         env:
           # A separate token for the Worker (Workers Scripts, Workers Routes, D1, Email Sending: Edit) if one is set;
           # otherwise the Pages token, which then needs those permissions too.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.LAB_WORKER_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}
+      # The contact-form Worker's settings (email bindings, Durable Object, email-api domain, secrets) live in
+      # Cloudflare. This uploads the code only, through the API that leaves all of them untouched, and only
+      # when workers/contact-form changed in this commit (or on Run workflow).
+      - name: Update the contact-form Worker code
+        working-directory: workers/contact-form
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] && git diff --quiet HEAD~1 HEAD -- . ; then
+            echo "workers/contact-form unchanged; skipping."; exit 0
+          fi
+          curl -sS --fail-with-body -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/avantgarde-contact/content" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -F 'metadata={"main_module":"index.js"};type=application/json' \
+            -F 'index.js=@src/index.js;filename=index.js;type=application/javascript+module' \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const r=JSON.parse(d);if(!r.success){console.error(JSON.stringify(r.errors));process.exit(1)}console.log("avantgarde-contact updated")})'
+        env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.LAB_WORKER_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '424121e0b72c1a32e08729028250a935' }}
