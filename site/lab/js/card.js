@@ -29,7 +29,7 @@
   function fontsReady() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     return Promise.all([
-      document.fonts.load('400 120px "AG Display"', "AGDBRF水木火土金"),
+      document.fonts.load('400 120px "AG Display"', "AVANTGARDE水木火土金"),
       document.fonts.load('600 40px "Jost"', "Avantgarde"),
       document.fonts.load('400 30px "Fira Sans"', "Studio")
     ]).catch(function () { return null; });

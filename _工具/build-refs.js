@@ -2,10 +2,10 @@
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path'), http = require('http');
 const SITE = path.resolve(process.argv[2] || 'site'), OUT = path.resolve(process.argv[3] || 'out/平台实施包');
 const REF = path.join(OUT, '02-参考截图'), IMG = path.join(OUT, '03-素材图');
-const SECTIONS = [['top', '01-首屏'], ['facts', '02-数字条'], ['alliance', '03-三方合作'], ['programmes', '04-课程'], ['journey', '05-路径'], ['faculty', '06-导师'], ['results', '07-成果'], ['journal', '08-内容'], ['lab', '09-测试入口'], ['faq', '10-常见问题'], ['contact', '11-联系'], ['foot', '12-页脚']];
+const SECTIONS = [['top', '01-首屏'], ['facts', '02-数字条'], ['alliance', '03-合作'], ['programmes', '04-课程'], ['journey', '05-路径'], ['faculty', '06-导师'], ['results', '07-成果'], ['journal', '08-内容'], ['lab', '09-测试入口'], ['faq', '10-常见问题'], ['contact', '11-联系'], ['foot', '12-页脚']];
 // one page of each subpage format, full length, phone and desktop
 const SUBS = [['journal/index.html', '内容-文章列表'], ['journal/curator-day.html', '内容-文章'], ['programmes/masterclass.html', '课程-国际大师课'], ['programmes/advanced-studio.html', '课程-进阶创作课'],
-  ['programmes/applications.html', '课程-申请与衔接'], ['programmes/summer-lab.html', '课程-夏季工作营'], ['faculty/xg.html', '导师-XG'], ['alliance/index.html', '三方合作-详情']];
+  ['programmes/applications.html', '课程-申请与衔接'], ['programmes/summer-lab.html', '课程-夏季工作营'], ['faculty/xg.html', '导师-XG'], ['alliance/index.html', '合作-详情']];
 const T = { '.html':'text/html; charset=utf-8', '.css':'text/css', '.js':'application/javascript', '.svg':'image/svg+xml', '.png':'image/png', '.woff2':'font/woff2' };
 const fsx = require('fs');
 const srv = http.createServer((q, r) => { let p = decodeURIComponent(q.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html'; fs.readFile(path.join(SITE, p), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': T[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
@@ -38,9 +38,9 @@ const prep = async p => { await p.evaluate(() => document.fonts.ready); await p.
   // illustrations: transparent outside the rounded corners, no film grain (add it in the builder if wanted)
   await p.addStyleTag({ content: 'html,body,.sec,.sec--grey,.sec--dark{background:transparent!important}.grain{display:none!important}' });
   const shot = (el, f) => el.screenshot({ path: f, omitBackground: true });
-  const arts = await p.$$('.ally__art'); const an = ['三方插图-01-先端艺培.png', '三方插图-02-天际线.png', '三方插图-03-DBRF.png']; for (let i = 0; i < arts.length; i++) await shot(arts[i], path.join(IMG, an[i]));
+  const arts = await p.$$('.ally__art'); const an = ['合作插图-01-先端艺培.png', '合作插图-02-天际线.png']; for (let i = 0; i < arts.length; i++) await shot(arts[i], path.join(IMG, an[i]));
   const posts = await p.$$('.post__art'); for (let i = 0; i < posts.length; i++) await shot(posts[i], path.join(IMG, `内容封面-0${i + 1}.png`));
-  const pics = await p.$$('.person__pic'); const pn = ['导师占位-LD.png', '导师占位-XG.png', '导师占位-客座.png']; for (let i = 0; i < pics.length; i++) await shot(pics[i], path.join(IMG, pn[i]));
+  const pics = await p.$$('.person__pic'); const pn = ['导师占位-HS.png', '导师占位-KL.png', '导师占位-XG.png', '导师占位-客座.png']; for (let i = 0; i < pics.length; i++) await shot(pics[i], path.join(IMG, pn[i]));
   // extended graphics as transparent PNGs (curved wordmark, speckled marks, pattern tiles)
   for (const [f, out, W, bg] of [['ag-arc.svg', '图形-弧形字-黑.png', 900], ['ag-mark-speck.svg', '图形-颗粒AG-黑.png', 1200], ['ag-stack-speck.svg', '图形-颗粒叠层-黑.png', 1000], ['pattern-arcs-ink.svg', '纹样-弧形字散布-黑-720.png', 720], ['pattern-arcs-paper.svg', '纹样-弧形字散布-白-720.png', 720]]) {
     const svgTxt = fsx.readFileSync(path.join(SITE, 'assets/img', f), 'utf8'); const vbx = svgTxt.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number); const H = Math.round(W * vbx[3] / vbx[2]);

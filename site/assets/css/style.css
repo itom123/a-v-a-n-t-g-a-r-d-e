@@ -58,7 +58,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 ::selection { background: var(--ink); color: var(--paper); }
 /* line breaking: titles split into even lines; text never leaves one word or one character alone on the last line.
    balance would cut Chinese words (创作|者), so Chinese titles only avoid a lone last character, and section
-   titles break at their own punctuation or at a \u200b placed in content.js (三方，/一个工作室). */
+   titles break at their own punctuation or at a \u200b placed in content.js (两方，/一个工作室). */
 h1, h2, h3, h4, summary, .h2, .quote p { text-wrap: balance; }
 p, li, dd, dt, figcaption, cite, legend, label, small { text-wrap: pretty; }
 :is(li, dd, dt, figcaption, cite, legend, label, small):lang(en) { text-wrap: balance; } /* short English lines split evenly */
@@ -171,7 +171,7 @@ html[lang="zh-CN"] .prog__fit, html[lang="zh-CN"] .quote cite { font-style: norm
 .facts__l { font: 400 15px/1.4 var(--f-body); color: var(--grey-2); max-width: 16em; }
 
 /* ---------- alliance ---------- */
-.alliance { --ag: clamp(48px, 6vw, 96px); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--ag); align-items: start; }
+.alliance { --ag: clamp(48px, 6vw, 96px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--ag); align-items: start; }
 .ally { display: grid; align-content: start; gap: 10px; padding-top: 22px; border-top: 2px solid var(--ink); min-width: 0; }
 .ally__x { display: none; font: var(--w-display) 44px/1 var(--f-display); text-align: center; padding: 22px 0; }
 .ally__media { position: relative; margin-bottom: 12px; }
@@ -426,7 +426,7 @@ html[lang="zh-CN"] .prog__fit, html[lang="zh-CN"] .quote cite { font-style: norm
 }
 @media (max-width: 400px) {
   .ring { width: 110px; height: 110px; }
-  .foot__collab { font-size: min(18px, 4.7vw); } /* "× De Beauvoir Forum" stays on one line down to 320px */
+  .foot__collab { font-size: min(18px, 4.7vw); } /* the partner line stays on one line down to 320px */
 }
 @media (max-width: 359px) {
 }
