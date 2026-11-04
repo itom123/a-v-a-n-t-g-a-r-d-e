@@ -1,4 +1,4 @@
-# Avantgarde Studio 官网｜先端艺培 × 天际线 × DBRF
+# Avantgarde Studio 官网｜先端艺培 × 天际线
 
 尚岸光景（ASHORE TIME）旗下先端艺培的中英双语官网：https://www.a-v-a-n-t-g-a-r-d-e.com
 
@@ -9,7 +9,7 @@
 ```
 site/                    整站，原样上传
   assets/js/content.js        ★ 首页的文字、数字、导师、成果
-  assets/js/content-pages.js  ★ 子页面的长文字（文章、课程、导师简介、三方分工）
+  assets/js/content-pages.js  ★ 子页面的长文字（文章、课程、导师简介、合作分工）
   assets/js/main.js · page.js 首页和子页面的渲染
   assets/css/style.css        视觉规范（只用黑白灰）
   lab/                        AG LAB 创作人格测试

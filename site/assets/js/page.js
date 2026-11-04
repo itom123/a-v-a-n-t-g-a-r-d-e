@@ -92,8 +92,7 @@
   }
   function allyArt(k) {
     if (k === "ag") return '<svg viewBox="0 0 400 200"><use href="#ag-mark"/></svg>';
-    if (k === "sky") return skyArt();
-    return '<svg viewBox="0 0 400 200"><text x="200" y="100" dominant-baseline="central" text-anchor="middle" class="ally__big">DBRF</text></svg>';
+    return skyArt();
   }
 
   /* ---------- shared blocks ---------- */
@@ -110,10 +109,10 @@
       '<button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span></button></div>';
   }
   function renderFoot() {
-    var ring = "Avantgarde Studio · Skyline · De Beauvoir Forum · ", ringLen = (2 * Math.PI * 78 - 1).toFixed(1);
+    var ring = "Avantgarde Studio · Skyline · London · Shanghai · ", ringLen = (2 * Math.PI * 78 - 1).toFixed(1);
     var nav = S.nav.filter(function (n) { return !hiddenSec(n.id); });
     $("#foot").innerHTML = '<div class="wrap foot__grid"><div class="foot__brand"><svg class="foot__lockup" role="img" aria-label="Avantgarde Studio"><use href="#ag-lockup"/></svg>' +
-      '<p class="foot__collab">× 天际线 Skyline<br>× De Beauvoir Forum</p></div>' +
+      '<p class="foot__collab">× 天际线 Skyline</p></div>' +
       '<svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><defs><path id="ringPath" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0"/></defs><text><textPath href="#ringPath" textLength="' + ringLen + '" lengthAdjust="spacing">' + ring + '</textPath></text><use href="#ag-mark" x="62" y="80" width="76" height="40"/></svg>' +
       '<div class="foot__meta"><nav>' + nav.map(function (n) { return '<a href="' + esc(link(n.href || "index.html#" + n.id)) + '">' + esc(t(n)) + "</a>"; }).join("") + "</nav>" +
       "<p>" + esc(t(S.footer.line)) + '</p><p class="foot__small">' + esc(t(S.footer.disclaimer)) + '</p><p class="foot__small">© ' + new Date().getFullYear() + " Avantgarde Studio 先端艺培</p></div></div>" +

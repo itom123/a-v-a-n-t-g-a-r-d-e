@@ -31,13 +31,12 @@ window.SITE = {
     enName: "Avantgarde Studio",
     partners: [
       { key: "ag",  name: "Avantgarde Studio", local: "先端艺培" },
-      { key: "sky", name: "Skyline",           local: "天际线" },
-      { key: "dbrf", name: "DBRF",             local: "De Beauvoir Forum" }
+      { key: "sky", name: "Skyline",           local: "天际线" }
     ]
   },
 
   nav: [
-    { id: "alliance",   zh: "三方合作", en: "Alliance" },
+    { id: "alliance",   zh: "合作", en: "Alliance" },
     { id: "programmes", zh: "课程",     en: "Programmes" },
     { id: "journey",    zh: "路径",     en: "Journey" },
     { id: "faculty",    zh: "导师",     en: "Faculty" },
@@ -58,15 +57,15 @@ window.SITE = {
 
   // Facts about how the studio works — true by design, not outcomes.
   facts: [
-    { value: 3,  suffix: "",  label: { zh: "合作方，一条完整链路", en: "partners, one continuous path" } },
+    { value: 2,  suffix: "",  label: { zh: "合作方，一条完整链路", en: "partners, one continuous path" } },
     { value: 5,  suffix: "",  label: { zh: "每期大师课席位上限", en: "masterclass seats per cohort, at most" } },
     { value: 1,  suffix: ":1", label: { zh: "导师与学生，全程", en: "tutor to student, start to finish" } },
     { value: 3,  suffix: "",  label: { zh: "申请地区：英国、香港、新加坡", en: "regions: UK, Hong Kong, Singapore" } }
   ],
 
   alliance: {
-    title: { zh: "三方，一个工作室", en: "Three partners, one studio" },
-    more: { zh: "三方怎样分工", en: "How the three work together" },
+    title: { zh: "两方，一个工作室", en: "Two partners, one studio" },
+    more: { zh: "两方怎样分工", en: "How the two work together" },
     intro: {
       zh: "伦敦给方向，沪苏两地管落地，工作室把两端接在一起。",
       en: "London sets the direction, Shanghai and Suzhou look after delivery, and the studio holds the two together."
@@ -89,16 +88,6 @@ window.SITE = {
           zh: "上海长宁的留学规划团队，八年申请经验、500 多个申请案例：咨询、选校与时间线、语言与标化、签证行前和家长沟通。",
           en: "An admissions planning team in Changning, Shanghai, with eight years’ experience and 500+ applications: enquiries, school lists and timelines, language tests, visas and pre-departure, and family communication."
         }
-      },
-      {
-        key: "dbrf", tag: "03", slug: "dbrf",
-        name: "De Beauvoir Forum", local: "DBRF",
-        role: { zh: "伦敦 · 大师课与导师辅导", en: "London · masterclasses and mentoring" },
-        body: {
-          zh: "伦敦学者与文化工作者组成的咨询团队：小班大师课、长期一对一辅导和创意行业英语，讲研究、策展与可持续的创作生涯。",
-          en: "A London consultancy of academics and cultural workers: small-group masterclasses, long-term one-to-one mentoring and English for the creative industries — on research, curating and a sustainable creative life."
-        },
-        motto: "Creative Practices ¤ Sustainable Economies"
       }
     ]
   },
@@ -110,7 +99,7 @@ window.SITE = {
       {
         no: "01", key: "master", dark: true, slug: "masterclass",
         name: { zh: "国际大师课", en: "International Masterclass" },
-        by: "DBRF · London",
+        by: "Avantgarde Studio · London",
         points: {
           zh: ["每期不超过 5 席", "一对一或小班", "研究方法、策展思维、创作生涯"],
           en: ["Up to 5 seats per cohort", "One-to-one or small group", "Research, curatorial thinking, creative careers"]
@@ -162,16 +151,6 @@ window.SITE = {
     title: { zh: "导师", en: "Faculty" },
     intro: { zh: "在伦敦一线教学、策展与创作的人。", en: "People who teach, curate and make work in London today." },
     people: [
-      // Tutors appear by their initials. LD appears as "Dr LD, Independent Curator and Reader" (2026-10-29): no full name, UAL or Chelsea anywhere in writing.
-      {
-        initials: "LD", slug: "ld",
-        name: "Dr LD",
-        role: { zh: "独立策展人、Reader · 伦敦大师课", en: "Independent Curator and Reader · London masterclass" },
-        lines: {
-          zh: ["策展人、学者，二十余年独立策展经验", "Electra 联合创始人（2003–2011）", "第 60 届贝尔格莱德十月沙龙联合策展人（2024）"],
-          en: ["Curator and scholar, 20+ years in independent curating", "Co-founder, Electra (2003–2011)", "Co-curator, 60th October Salon, Belgrade (2024)"]
-        }
-      },
       {
         initials: "HS", slug: "service-design-tutor",
         name: "HS",
@@ -202,7 +181,7 @@ window.SITE = {
       {
         initials: "+", slug: "guest-tutors",
         name: { zh: "伦敦客座导师", en: "Guest tutors, London" },
-        role: { zh: "由 DBRF 邀请", en: "Invited through DBRF" },
+        role: { zh: "按每期方向邀请", en: "Invited for each cohort" },
         lines: {
           zh: ["英国艺术院校的课程主任与资深讲师", "纯艺、设计、策展方向", "名单按期公布"],
           en: ["Course leaders and senior lecturers from UK art schools", "Fine art, design and curating", "Announced each cohort"]
@@ -365,7 +344,7 @@ window.SITE = {
   },
 
   footer: {
-    line: { zh: "尚岸光景（ASHORE TIME）旗下的艺术与设计留学工作室。与天际线、De Beauvoir Forum 联合呈现。", en: "An art and design admissions studio of ASHORE TIME (尚岸光景), presented with Skyline and De Beauvoir Forum." },
+    line: { zh: "尚岸光景（ASHORE TIME）旗下的艺术与设计留学工作室。与天际线联合呈现。", en: "An art and design admissions studio of ASHORE TIME (尚岸光景), presented with Skyline." },
     disclaimer: {
       zh: "院校名称仅用于说明申请去向，不代表任何合作或背书关系。",
       en: "University names indicate application destinations only and imply no partnership or endorsement."

@@ -19,8 +19,8 @@ Static bilingual (zh/en) site in `site/`, rendered from `site/assets/js/content.
 ## Rules for content
 
 - This repository is public. Never commit internal notes, meeting minutes, partners' or tutors' private details, or secrets. `.gitignore` lists the folders that stay on the owner's PC.
-- Tutors appear by initials only: LD (shown as "Dr LD"), HS, KL, XG. Never write their full names, in pages, file names, URLs or comments.
-- Dr LD is billed only as "Independent Curator and Reader". Never mention UAL, Chelsea or her role there in any written or marketing material.
+- Tutors appear by initials only: HS, KL, XG. Never write their full names, in pages, file names, URLs or comments.
+- LD and De Beauvoir Forum (DBRF) are not part of the studio. Do not mention them, their people or their background anywhere on the site or in marketing material.
 - HS and KL are anonymised: no names, schools or employers beyond what content.js already says.
 - Visual design is black, white and grey only (`#0e0f0e`, `#f4f5f3`, `#d6d6d5`). Partner logos are drawn in `currentColor`.
 - Results are Skyline's 2025–26 offers and must stay credited to Skyline. Don't promise admission anywhere.

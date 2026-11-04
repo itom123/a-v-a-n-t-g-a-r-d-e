@@ -20,7 +20,7 @@ const VH = 860;
 const PAGES = [
   ["home", "index.html"], ["404", "404.html"], ["journal", "journal/index.html"], ["article", "journal/curator-day.html"],
   ["prog-studio", "programmes/advanced-studio.html"], ["prog-apply", "programmes/applications.html"], ["prog-summer", "programmes/summer-lab.html"],
-  ["tutor-xg", "faculty/xg.html"], ["tutor-ld", "faculty/ld.html"], ["tutor-sd", "faculty/service-design-tutor.html"], ["tutor-cw", "faculty/curating-writing-tutor.html"],
+  ["tutor-xg", "faculty/xg.html"], ["tutor-sd", "faculty/service-design-tutor.html"], ["tutor-cw", "faculty/curating-writing-tutor.html"],
   ["tutor-guests", "faculty/guest-tutors.html"], ["alliance", "alliance/index.html"], ["lab", "lab/index.html"], ["privacy", "lab/privacy.html"]
 ].filter(([id]) => !ONLY || ONLY.includes(id));
 

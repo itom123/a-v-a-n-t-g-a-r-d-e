@@ -7,7 +7,7 @@
 | 做什么 | 命令 |
 |---|---|
 | 改完 content.js 后，刷新 index.html 里预写的中文内容 | `node _工具/prerender.js site` |
-| 改完 content.js 或 content-pages.js 后，重新生成子页面（文章、课程、导师、三方合作）并刷新它们预写的中文和 sitemap.xml | `node _工具/build-pages.js site` |
+| 改完 content.js 或 content-pages.js 后，重新生成子页面（文章、课程、导师、合作）并刷新它们预写的中文和 sitemap.xml | `node _工具/build-pages.js site` |
 | 重新生成扩展图形（弧形字、散布纹样、颗粒图形 SVG，并同步 index.html 里的图形） | `node _工具/build-motifs.js site`，之后再跑一次 `build-pages.js` |
 | 重新生成平台分区代码（首页 12 个分区 + 子页面） | `node _工具/build-pack.js site 平台实施包` |
 | 重新生成参考截图和素材图 | `node _工具/build-refs.js site 平台实施包` |

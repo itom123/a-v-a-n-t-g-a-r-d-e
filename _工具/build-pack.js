@@ -12,7 +12,7 @@ const svgData = f => 'data:image/svg+xml;base64,' + fs.readFileSync(path.join(SI
 const embed = html => html.replace(/src="[^"]*assets\/img\/([\w-]+\.svg)"/g, (m, f) => `src="${svgData(f)}"`);
 const CSS = fs.readFileSync(path.join(SITE, 'assets/css/style.css'), 'utf8').replace(/url\(\.\.\/img\/([\w-]+\.svg)\)/g, (m, f) => `url("${svgData(f)}")`);
 const SECTIONS = [
-  ['top', '01-首屏', 'Hero'], ['facts', '02-数字条', 'Facts'], ['alliance', '03-三方合作', 'Alliance'], ['programmes', '04-课程', 'Programmes'],
+  ['top', '01-首屏', 'Hero'], ['facts', '02-数字条', 'Facts'], ['alliance', '03-合作', 'Alliance'], ['programmes', '04-课程', 'Programmes'],
   ['journey', '05-路径', 'Journey'], ['faculty', '06-导师', 'Faculty'], ['results', '07-成果', 'Results'], ['journal', '08-内容', 'Journal'],
   ['lab', '09-测试入口', 'AG Lab'], ['faq', '10-常见问题', 'FAQ'], ['contact', '11-联系', 'Contact'], ['foot', '12-页脚', 'Footer']];
 // subpages (round 3): one standalone code file each, from the rendered pages in site/
@@ -23,7 +23,7 @@ const SUBPAGES = [];
 if (!SC.journal.hidden) { SUBPAGES.push(['journal/index.html', '内容-00-文章列表']); SC.journal.items.forEach((it, i) => it.slug && SUBPAGES.push([`journal/${it.slug}.html`, `内容-0${i + 1}-${zhOf(it.t)}`])); }
 if (!SC.programmes.hidden) [...SC.programmes.items, SC.programmes.extra].forEach((it, i) => it && it.slug && SUBPAGES.push([`programmes/${it.slug}.html`, `课程-0${i + 1}-${zhOf(it.name)}`]));
 if (!SC.faculty.hidden) SC.faculty.people.forEach(p => p.slug && !p.hidden && SUBPAGES.push([`faculty/${p.slug}.html`, `导师-${/[\u4e00-\u9fff]/.test(zhOf(p.name)) ? zhOf(p.name).split(' ')[0] : p.slug}`]));
-if (!SC.alliance.hidden) SUBPAGES.push(['alliance/index.html', '三方合作-详情']);
+if (!SC.alliance.hidden) SUBPAGES.push(['alliance/index.html', '合作-详情']);
 const NOISE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 const EXTRA = `
 /* ---- extras for builder pages ---- */

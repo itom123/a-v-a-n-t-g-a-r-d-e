@@ -363,7 +363,6 @@ const STATES = [
   { id: "prog-studio", url: "programmes/advanced-studio.html" },
   { id: "prog-apply", url: "programmes/applications.html" },
   { id: "prog-summer", url: "programmes/summer-lab.html" },
-  { id: "tutor-ld", url: "faculty/ld.html" },
   { id: "tutor-xg", url: "faculty/xg.html" },
   { id: "tutor-sd", url: "faculty/service-design-tutor.html" },
   { id: "tutor-cw", url: "faculty/curating-writing-tutor.html" },

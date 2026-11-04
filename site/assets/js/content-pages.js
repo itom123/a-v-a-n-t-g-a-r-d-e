@@ -195,7 +195,7 @@ window.PAGES = {
       facts: [
         { k: { zh: "形式", en: "Format" }, v: { zh: "线上为主，伦敦可线下", en: "Mostly online; in person in London when possible" } },
         { k: { zh: "人数", en: "Group size" }, v: { zh: "每期不超过 5 席", en: "Up to 5 seats per cohort" } },
-        { k: { zh: "导师", en: "Tutors" }, v: { zh: "LD 与 DBRF 邀请的客座导师", en: "LD and guest tutors invited by DBRF" } },
+        { k: { zh: "导师", en: "Tutors" }, v: { zh: "XG 与伦敦客座导师", en: "XG and guest tutors in London" } },
         { k: { zh: "适合", en: "For" }, v: { zh: "硕士与跨学科申请者", en: "MA and interdisciplinary applicants" } }
       ],
       intro: {
@@ -215,11 +215,11 @@ window.PAGES = {
       join: [
         { t: { zh: "预约作品集评估", en: "Book a portfolio review" }, d: { zh: "先聊一次，看作品，谈方向。", en: "A first conversation about your work and direction." } },
         { t: { zh: "导师判断", en: "Tutor recommendation" }, d: { zh: "大师课名额少，导师会先判断是否适合你现在的阶段。", en: "Places are few, so tutors first check it suits where you are now." } },
-        { t: { zh: "课前问卷", en: "Pre-course questionnaire" }, d: { zh: "DBRF 了解你的背景、现状与目标，定制方案和每周投入。", en: "DBRF asks about your background, situation and goals, then shapes the plan and weekly time." } },
+        { t: { zh: "课前问卷", en: "Pre-course questionnaire" }, d: { zh: "导师了解你的背景、现状与目标，定制方案和每周投入。", en: "Your tutor asks about your background, situation and goals, then shapes the plan and weekly time." } },
         { t: { zh: "开课与结课", en: "Sessions and review" }, d: { zh: "每次课后有行动要点；结课时给出总结和下一步建议。", en: "Action points after every session; a closing summary with next steps." } }
       ],
       faq: [2, 3, 0],
-      tutors: ["ld", "guest-tutors"]
+      tutors: ["xg", "guest-tutors"]
     },
 
     "advanced-studio": {
@@ -319,17 +319,6 @@ window.PAGES = {
 
   /* ---------------- faculty ---------------- */
   people: {
-    "ld": {
-      draft: true,
-      bio: {
-        zh: ["Dr LD 是独立策展人和学者（Reader），有二十余年的独立策展经验。她曾联合创办艺术机构 Electra（2003–2011），并于 2024 年联合策划第 60 届贝尔格莱德十月沙龙。", "在与 DBRF 合作的伦敦大师课中，她带领研究方法、策展思维与可持续创作生涯的讨论，帮助学员把一个想法推成可以被展览、被写出来的问题。"],
-        en: ["Dr LD is an independent curator and Reader with more than twenty years in independent curating. She co-founded the arts organisation Electra (2003–2011) and co-curated the 60th October Salon in Belgrade in 2024.", "In the London masterclass run with DBRF, she leads discussion of research methods, curatorial thinking and sustainable creative careers, helping students turn one idea into a question that can be exhibited and written about."]
-      },
-      focus: { zh: ["策展与研究", "展览与公共项目", "可持续的创作生涯"], en: ["Curating and research", "Exhibitions and public programmes", "Sustainable creative careers"] },
-      quote: { zh: "Creative Practices ¤ Sustainable Economies", en: "Creative Practices ¤ Sustainable Economies" },
-      leads: ["masterclass"]
-    },
-
     "xg": {
       draft: false,
       bio: {
@@ -338,7 +327,7 @@ window.PAGES = {
       },
       focus: { zh: ["摄影", "精神分析与理论", "家庭档案与代际记忆"], en: ["Photography", "Psychoanalysis and theory", "Family archives and memory"] },
       quote: null,
-      leads: ["advanced-studio", "applications"]
+      leads: ["masterclass", "advanced-studio", "applications"]
     },
 
     "service-design-tutor": {
@@ -366,8 +355,8 @@ window.PAGES = {
     "guest-tutors": {
       draft: true,
       bio: {
-        zh: ["大师课的客座导师由 DBRF 按每期学员的方向邀请，来自英国艺术院校，多为课程主任和资深讲师，覆盖纯艺、设计与策展。", "他们参与专题讨论和作品点评，让你在申请之前，就听到英国院校里真正在用的标准和语言。名单按期公布。"],
-        en: ["Guest tutors for the masterclass are invited by DBRF to suit each cohort. They come from UK art schools, mostly course leaders and senior lecturers, across fine art, design and curating.", "They join seminars and reviews, so you hear the standards and language UK schools actually use before you apply. The list is announced each cohort."]
+        zh: ["大师课的客座导师由先端艺培按每期学员的方向邀请，来自英国艺术院校，多为课程主任和资深讲师，覆盖纯艺、设计与策展。", "他们参与专题讨论和作品点评，让你在申请之前，就听到英国院校里真正在用的标准和语言。名单按期公布。"],
+        en: ["Guest tutors for the masterclass are invited by Avantgarde Studio to suit each cohort. They come from UK art schools, mostly course leaders and senior lecturers, across fine art, design and curating.", "They join seminars and reviews, so you hear the standards and language UK schools actually use before you apply. The list is announced each cohort."]
       },
       focus: { zh: ["纯艺", "设计", "策展"], en: ["Fine art", "Design", "Curating"] },
       quote: null,
@@ -378,7 +367,7 @@ window.PAGES = {
   /* ---------------- alliance page ---------------- */
   alliance: {
     lead: {
-      zh: "三方各管一段，学生只需要面对一条完整的路：伦敦给方向，沪苏管落地，工作室把两端接在一起。",
+      zh: "两方各管一段，学生只需要面对一条完整的路：伦敦给方向，沪苏管落地，工作室把两端接在一起。",
       en: "Each partner looks after one part, so the student sees one continuous path: London sets the direction, Shanghai and Suzhou look after delivery, and the studio holds the two together."
     },
     chain: {
@@ -405,25 +394,6 @@ window.PAGES = {
         does: { zh: ["综合评估：学术背景、英文能力、性格与职业测评", "留学方案：院校选择、专业分析、时间安排", "语言与标化考试规划", "签证、行前与入境后的衔接", "家长沟通与日常学生服务"], en: ["Assessment: academic background, English, personality and career profiling", "Study plan: school choice, course analysis, timeline", "Language and test planning", "Visa, pre-departure and arrival support", "Family communication and day-to-day student care"] },
         place: { zh: "上海市长宁区古北路 678 号同诠大厦 1201C", en: "Room 1201C, Tongquan Building, 678 Gubei Road, Changning, Shanghai" },
         programmes: ["applications"]
-      },
-      // From dbrforum.com (checked 2026-10-29): services for individuals, the four-stage process, both mottos.
-      dbrf: {
-        about: {
-          zh: "De Beauvoir Forum（DBRF）是伦敦的一家咨询机构，由一群学者与文化工作者创办，帮助文化与创意领域的个人和机构建立真诚、可持续、在经济上负责任的实践。他们把创作上的成长和实际的财务素养放在一起，让创作者懂得怎样理解、衡量并维持自己的劳动。",
-          en: "De Beauvoir Forum (DBRF) is a London consultancy founded by a group of academics and cultural workers. It helps people and organisations in the cultural and creative sectors build authentic, sustainable and financially responsible practices, pairing creative growth with practical financial literacy so that makers can understand, value and sustain their labour."
-        },
-        place: { zh: "伦敦 · dbrforum.com", en: "London · dbrforum.com" },
-        site: "https://dbrforum.com/",
-        does: {
-          zh: ["伦敦小班大师课，邀请英国院校客座导师", "长期一对一导师辅导：创作发展与财务稳定", "创意与文化行业英语，帮助国际学生适应英文学习", "作品集叙事、选择、排序与呈现", "选课、个人陈述、面试与作品集审阅", "面向跨国机构的跨文化能力培训"],
-          en: ["Small-group masterclasses in London, with guest tutors from UK art schools", "Long-term one-to-one mentoring: creative development and financial stability", "English for the creative and cultural industries, for international students", "Portfolio narrative, selection, sequencing and presentation", "Course choices, personal statements, interviews and portfolio review", "Intercultural competence training for organisations working across borders"]
-        },
-        how: {
-          zh: ["期望：课前问卷了解背景、现状与目标，据此定制方案和时间投入", "持续：每次课后给出行动要点和自主练习目标", "进度：学员写每日日志，双方共同设定里程碑，每次课简短回顾节奏", "评估：结课时给出进度总结和下一步建议，可按需提供推荐信"],
-          en: ["Expectations: a questionnaire on background, situation and goals shapes a tailored plan and time commitment", "Consistency: action points and self-directed goals after every session", "Progress: a daily journal, milestones agreed together and a short check-in each session", "Evaluation: a closing summary with next steps, and reference letters on request"]
-        },
-        mottos: ["Cultural Proficiency ¤ Global Impact", "Creative Practices ¤ Sustainable Economies"],
-        programmes: ["masterclass"]
       }
     }
   }

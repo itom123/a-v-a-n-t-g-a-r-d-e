@@ -89,7 +89,7 @@ module.exports = async function extended(o) {
     <img src="${IMG('ag-mark-speck-light.svg')}" style="position:absolute;right:-260px;bottom:-150px;width:860px;opacity:.2">${frame('bd', '11', T.series)}
     ${txt ? `<div style="position:absolute;left:72px;right:72px;top:190px;display:grid;gap:26px;z-index:4">
       <b class="outline" style="font:800 360px/.78 var(--display);-webkit-text-stroke-color:var(--paper);margin-left:-14px">01</b>
-      <span style="font:500 28px/1 var(--ui);letter-spacing:.14em">DBRF · LONDON</span>
+      <span style="font:500 28px/1 var(--ui);letter-spacing:.14em">AVANTGARDE · LONDON</span>
       <h1 style="font:700 112px/1.08 var(--cjk);letter-spacing:.02em">课程名称</h1>
       <p style="font:400 34px/1.5 var(--cjk);color:#bdbebc">一句话说明这门课，最多两行。</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--paper);margin-top:26px">${[['形式', '线上为主'], ['人数', '每期 5 席'], ['导师', '伦敦导师'], ['适合', '硕士申请']].map(([k, v], i) => `<div style="padding:26px ${i % 2 ? '0 26px 30px' : '20px 26px 0'};${i % 2 ? 'border-left:1px solid rgba(244,245,243,.2);' : ''}${i > 1 ? 'border-top:1px solid rgba(244,245,243,.2);' : ''}display:grid;gap:10px;align-content:start"><b style="font:500 22px/1 var(--ui);letter-spacing:.14em;opacity:.7">${k}</b><span style="font:600 40px/1.2 var(--cjk)">${v}</span></div>`).join('')}</div></div>` : ''}</div>`;
